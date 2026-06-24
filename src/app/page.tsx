@@ -64,8 +64,8 @@ export default async function Home({
       <div className="absolute inset-0 z-0 bg-slate-950/80"></div>
       
       {/* HEADER */}
-      <header className="glass-panel sticky top-0 z-40 flex items-center justify-between px-8 py-4 m-4 rounded-2xl">
-        <div className="flex items-center gap-3">
+      <header className="glass-panel sticky top-0 z-40 flex items-center justify-between px-4 md:px-8 py-3 md:py-4 m-2 md:m-4 rounded-2xl">
+        <div className="flex items-center gap-2 md:gap-3">
           <Link href="/" className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-slate-800">
               <Image src="/logo.png" alt="Focus Stream Logo" width={32} height={32} className="object-cover" />
@@ -73,12 +73,14 @@ export default async function Home({
             <h1 className="text-xl font-bold tracking-wide text-white">Focus Stream</h1>
           </Link>
         </div>
-        <nav className="flex items-center gap-6">
-          <Link href="/" className="text-sm font-medium hover:text-white transition-colors text-slate-300">Playlists</Link>
-          <a href="#" className="text-sm font-medium hover:text-white transition-colors text-slate-300">Favorites</a>
-          <Link href="/admin" className="text-sm font-medium hover:text-teal-400 transition-colors text-slate-300">Admin</Link>
+        <nav className="flex items-center gap-4 md:gap-6">
+          <div className="hidden md:flex items-center gap-6">
+            <Link href="/" className="text-sm font-medium hover:text-white transition-colors text-slate-300">Playlists</Link>
+            <a href="#" className="text-sm font-medium hover:text-white transition-colors text-slate-300">Favorites</a>
+            <Link href="/admin" className="text-sm font-medium hover:text-teal-400 transition-colors text-slate-300">Admin</Link>
+          </div>
           
-          <div className="flex items-center gap-4 border-l border-slate-700 pl-6 ml-2">
+          <div className="flex items-center gap-3 md:gap-4 md:border-l md:border-slate-700 md:pl-6 md:ml-2">
             {isLoggedIn ? (
               <form action={async () => {
                 "use server";
@@ -101,9 +103,9 @@ export default async function Home({
       </header>
 
       {/* MAIN CONTENT */}
-      <main className="flex-1 flex flex-col px-8 pb-32 z-10">
-        <div className="mt-8 mb-8">
-          <h2 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-teal-300">
+      <main className="flex-1 flex flex-col px-4 md:px-8 pb-32 z-10">
+        <div className="mt-6 md:mt-8 mb-6 md:mb-8">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-teal-300">
             {currentCategory ? currentCategory : "Good Afternoon"}
           </h2>
           <p className="text-slate-400 mt-2">

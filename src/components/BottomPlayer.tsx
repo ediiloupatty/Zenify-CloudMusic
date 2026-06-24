@@ -174,7 +174,7 @@ export default function BottomPlayer() {
 
   return (
     <div 
-      className="glass-panel fixed bottom-0 left-0 w-full h-24 border-t border-b-0 border-l-0 border-r-0 rounded-t-2xl px-6 flex items-center justify-between z-50"
+      className="glass-panel fixed bottom-0 left-0 w-full h-auto min-h-[5.5rem] py-3 md:py-0 md:h-24 border-t border-b-0 border-l-0 border-r-0 rounded-t-2xl px-4 md:px-6 flex flex-col md:flex-row items-center justify-between z-50 gap-2 md:gap-0"
       onContextMenu={(e) => e.preventDefault()} // Disable right-click menu
     >
       
@@ -193,18 +193,18 @@ export default function BottomPlayer() {
       />
 
       {/* Track Info */}
-      <div className="flex items-center gap-4 w-1/3">
-        <div className="w-14 h-14 rounded-md bg-gradient-to-br from-indigo-500 to-purple-600 border border-slate-700 flex items-center justify-center overflow-hidden flex-shrink-0">
-          <span className="text-2xl">🎵</span>
+      <div className="flex items-center gap-3 md:gap-4 w-full md:w-1/3 order-1">
+        <div className="w-10 h-10 md:w-14 md:h-14 rounded-md bg-gradient-to-br from-indigo-500 to-purple-600 border border-slate-700 flex items-center justify-center overflow-hidden flex-shrink-0">
+          <span className="text-xl md:text-2xl">🎵</span>
         </div>
-        <div className="flex flex-col gap-1 overflow-hidden">
-          <div className="font-bold text-white text-sm truncate">{currentTrack.title}</div>
-          <div className="text-xs text-slate-400 truncate">{currentTrack.category}</div>
+        <div className="flex flex-col overflow-hidden">
+          <div className="font-bold text-white text-xs md:text-sm truncate">{currentTrack.title}</div>
+          <div className="text-[10px] md:text-xs text-slate-400 truncate">{currentTrack.category}</div>
         </div>
       </div>
 
       {/* Controls */}
-      <div className="flex flex-col items-center gap-2 w-1/3">
+      <div className="flex flex-col items-center gap-1 md:gap-2 w-full md:w-1/3 order-3 md:order-2 mt-1 md:mt-0">
         <div className="flex items-center gap-6">
           <button onClick={playPrevTrack} className="text-slate-400 hover:text-white transition-colors">⏮</button>
           <button
@@ -216,7 +216,7 @@ export default function BottomPlayer() {
           <button onClick={playNextTrack} className="text-slate-400 hover:text-white transition-colors">⏭</button>
         </div>
         {/* Progress bar */}
-        <div className="w-full max-w-md flex items-center gap-2">
+        <div className="w-full flex items-center gap-2">
           <span className="text-xs text-slate-500">{formatTime(progress)}</span>
           <div className="h-1 flex-1 bg-slate-800 rounded-full overflow-hidden relative cursor-pointer" 
                onClick={(e) => {
@@ -235,8 +235,8 @@ export default function BottomPlayer() {
         </div>
       </div>
 
-      {/* Extra controls (Timer, Volume) */}
-      <div className="flex items-center justify-end gap-6 w-1/3 text-slate-400">
+      {/* Extra controls (Timer, Volume) - Hidden on mobile */}
+      <div className="hidden md:flex items-center justify-end gap-6 w-1/3 order-2 md:order-3 text-slate-400">
         <div className="flex items-center gap-3">
           <button onClick={toggleTimer} className="hover:text-white transition-colors flex items-center gap-2" title="Toggle Pomodoro Timer">
             <span>⏱</span>
