@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Track } from "@/lib/cloudflare";
 import { usePlayer } from "@/context/PlayerContext";
+import NeuronVisualizer from "./NeuronVisualizer";
 
 export default function BottomPlayer() {
   const { 
@@ -14,26 +15,25 @@ export default function BottomPlayer() {
     playPrevTrack 
   } = usePlayer();
 
-  // --- Audio Player State ---
+  const [isExpanded, setIsExpanded] = useState(false);
   const [volume, setVolume] = useState(0.8);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
   
-  // --- Visualizer State ---
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
+  
+  // Minimal visualizer for bottom bar
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const currentTrack = tracks && tracks.length > 0 ? (tracks[currentTrackIndex] || tracks[0]) : null;
 
-  // --- Pomodoro State ---
   const POMODORO_TIME = 25 * 60;
   const [timeLeft, setTimeLeft] = useState(POMODORO_TIME);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
 
-  // --- Audio Player Logic ---
   const initAudioContext = () => {
     if (!audioContextRef.current && audioRef.current) {
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
@@ -58,7 +58,8 @@ export default function BottomPlayer() {
     }
   };
 
-  const togglePlay = () => {
+  const togglePlay = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     if (!audioRef.current) return;
     initAudioContext();
     if (isPlaying) {
@@ -76,15 +77,12 @@ export default function BottomPlayer() {
     }
   };
 
-  // Custom onEnded handler to call context's playNextTrack
   const handleEnded = () => {
     playNextTrack();
   };
 
-  // Auto-play when track changes if it was already playing
   useEffect(() => {
     if (isPlaying && audioRef.current) {
-      // Small timeout helps ensure audio is loaded before playing
       const playPromise = audioRef.current.play();
       if (playPromise !== undefined) {
         playPromise.catch(e => console.error("Playback failed:", e));
@@ -93,6 +91,7 @@ export default function BottomPlayer() {
   }, [currentTrackIndex, isPlaying, tracks]);
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.stopPropagation();
     const newVolume = parseFloat(e.target.value);
     setVolume(newVolume);
     if (audioRef.current) {
@@ -107,8 +106,9 @@ export default function BottomPlayer() {
     return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
   };
 
-  // --- Visualizer Logic ---
+  // Minimal bar visualizer logic
   useEffect(() => {
+    if (isExpanded) return; // Don't run minimal visualizer when expanded
     let animationFrame: number;
     const renderFrame = () => {
       animationFrame = requestAnimationFrame(renderFrame);
@@ -134,19 +134,15 @@ export default function BottomPlayer() {
 
       for (let i = 0; i < bufferLength; i++) {
         barHeight = dataArray[i] / 2;
-
         ctx.fillStyle = `rgba(45, 212, 191, ${Math.max(0.1, barHeight / 150)})`;
         ctx.fillRect(x, HEIGHT - barHeight, barWidth, barHeight);
-
         x += barWidth + 1;
       }
     };
-
     renderFrame();
     return () => cancelAnimationFrame(animationFrame);
-  }, []);
+  }, [isExpanded]);
 
-  // --- Pomodoro Logic ---
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (isTimerRunning && timeLeft > 0) {
@@ -159,10 +155,9 @@ export default function BottomPlayer() {
     return () => clearInterval(timer);
   }, [isTimerRunning, timeLeft]);
 
-  const toggleTimer = () => setIsTimerRunning(!isTimerRunning);
-  const resetTimer = () => { setIsTimerRunning(false); setTimeLeft(POMODORO_TIME); };
+  const toggleTimer = (e: React.MouseEvent) => { e.stopPropagation(); setIsTimerRunning(!isTimerRunning); };
+  const resetTimer = (e: React.MouseEvent) => { e.stopPropagation(); setIsTimerRunning(false); setTimeLeft(POMODORO_TIME); };
 
-  // Rewrite Cloudflare public URLs to our local proxy to bypass ISP blocks
   const rawUrl = currentTrack?.file_url || "";
   const proxyUrl = rawUrl.includes(".r2.dev/")
     ? `/api/audio/${rawUrl.split(".r2.dev/").pop()}`
@@ -172,13 +167,90 @@ export default function BottomPlayer() {
     return null;
   }
 
+  if (isExpanded) {
+    return (
+      <div 
+        className="fixed inset-0 h-screen w-screen z-[100] flex flex-col items-center justify-center p-8 bg-slate-950 overflow-hidden"
+        onContextMenu={(e) => e.preventDefault()}
+      >
+        <NeuronVisualizer analyser={analyserRef.current} />
+        
+        <audio
+          ref={audioRef}
+          src={proxyUrl}
+          crossOrigin="anonymous"
+          onTimeUpdate={handleTimeUpdate}
+          onEnded={handleEnded}
+          controlsList="nodownload"
+        />
+
+        {/* Top bar with close button */}
+        <div className="absolute top-0 w-full p-8 flex justify-between items-center z-10">
+          <button 
+            onClick={() => setIsExpanded(false)}
+            className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white backdrop-blur-md transition-colors"
+          >
+            <span className="text-xl">⏷</span>
+          </button>
+          <div className="text-teal-400 font-bold tracking-widest text-sm uppercase">Now Playing</div>
+          <div className="w-12"></div> {/* spacer */}
+        </div>
+
+        {/* Main expanded content */}
+        <div className="flex flex-col items-center justify-center w-full max-w-md z-10 mt-12">
+          {/* Big Track Icon */}
+          <div className="w-64 h-64 md:w-80 md:h-80 rounded-2xl bg-gradient-to-br from-indigo-500/80 to-purple-600/80 border border-slate-700/50 shadow-[0_0_50px_rgba(168,85,247,0.3)] flex items-center justify-center backdrop-blur-xl mb-12">
+            <span className="text-8xl md:text-9xl">🎵</span>
+          </div>
+          
+          {/* Track Info */}
+          <div className="w-full text-center mb-8">
+            <h2 className="font-extrabold text-3xl md:text-4xl text-white mb-2 drop-shadow-md">{currentTrack.title}</h2>
+            <p className="text-lg text-teal-300 drop-shadow-md">{currentTrack.category}</p>
+          </div>
+
+          {/* Progress bar */}
+          <div className="w-full flex items-center gap-4 mb-8">
+            <span className="text-sm text-slate-300 w-12 text-right font-mono">{formatTime(progress)}</span>
+            <div className="h-2 flex-1 bg-white/20 rounded-full overflow-hidden relative cursor-pointer backdrop-blur-md" 
+                 onClick={(e) => {
+                   if(audioRef.current && duration) {
+                     const rect = e.currentTarget.getBoundingClientRect();
+                     const percent = (e.clientX - rect.left) / rect.width;
+                     audioRef.current.currentTime = percent * duration;
+                   }
+                 }}>
+              <div
+                className="absolute top-0 left-0 h-full bg-teal-400 shadow-[0_0_10px_rgba(45,212,191,0.8)]"
+                style={{ width: `${duration ? (progress / duration) * 100 : 0}%` }}
+              ></div>
+            </div>
+            <span className="text-sm text-slate-300 w-12 font-mono">{formatTime(duration)}</span>
+          </div>
+
+          {/* Controls */}
+          <div className="flex items-center justify-center gap-8 w-full">
+            <button onClick={(e) => { e.stopPropagation(); playPrevTrack(); }} className="text-4xl text-slate-300 hover:text-white transition-colors">⏮</button>
+            <button
+              onClick={togglePlay}
+              className="w-20 h-20 rounded-full bg-teal-500 text-white flex items-center justify-center hover:scale-105 transition-transform shadow-[0_0_20px_rgba(45,212,191,0.4)]"
+            >
+              <span className="text-3xl ml-1">{isPlaying ? "⏸" : "▶"}</span>
+            </button>
+            <button onClick={(e) => { e.stopPropagation(); playNextTrack(); }} className="text-4xl text-slate-300 hover:text-white transition-colors">⏭</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // --- Normal Bar Mode ---
   return (
     <div 
-      className="glass-panel fixed bottom-0 left-0 w-full h-auto min-h-[5.5rem] py-3 md:py-0 md:h-24 border-t border-b-0 border-l-0 border-r-0 rounded-t-2xl px-4 md:px-6 flex flex-col md:flex-row items-center justify-between z-50 gap-2 md:gap-0"
-      onContextMenu={(e) => e.preventDefault()} // Disable right-click menu
+      className="glass-panel fixed bottom-0 left-0 w-full h-auto min-h-[5.5rem] py-3 md:py-0 md:h-24 border-t border-b-0 border-l-0 border-r-0 rounded-t-2xl px-4 md:px-6 flex flex-col md:flex-row items-center justify-between z-50 gap-2 md:gap-0 cursor-pointer hover:bg-slate-900/90 transition-colors"
+      onContextMenu={(e) => e.preventDefault()}
+      onClick={() => setIsExpanded(true)}
     >
-      
-      {/* Visualizer Canvas overlay */}
       <div className="absolute inset-0 w-full h-full -z-10 opacity-30 overflow-hidden rounded-t-2xl pointer-events-none">
         <canvas ref={canvasRef} className="w-full h-full" width={1000} height={100} />
       </div>
@@ -189,7 +261,7 @@ export default function BottomPlayer() {
         crossOrigin="anonymous"
         onTimeUpdate={handleTimeUpdate}
         onEnded={handleEnded}
-        controlsList="nodownload" // Additional protection for native UI
+        controlsList="nodownload"
       />
 
       {/* Track Info */}
@@ -201,10 +273,13 @@ export default function BottomPlayer() {
           <div className="font-bold text-white text-xs md:text-sm truncate">{currentTrack.title}</div>
           <div className="text-[10px] md:text-xs text-slate-400 truncate">{currentTrack.category}</div>
         </div>
+        <div className="ml-auto md:hidden">
+          <button onClick={(e) => { e.stopPropagation(); setIsExpanded(true); }} className="text-slate-400">⏶</button>
+        </div>
       </div>
 
       {/* Controls */}
-      <div className="flex flex-col items-center gap-1 md:gap-2 w-full md:w-1/3 order-3 md:order-2 mt-1 md:mt-0">
+      <div className="flex flex-col items-center gap-1 md:gap-2 w-full md:w-1/3 order-3 md:order-2 mt-1 md:mt-0" onClick={e => e.stopPropagation()}>
         <div className="flex items-center gap-6">
           <button onClick={playPrevTrack} className="text-slate-400 hover:text-white transition-colors">⏮</button>
           <button
@@ -215,7 +290,6 @@ export default function BottomPlayer() {
           </button>
           <button onClick={playNextTrack} className="text-slate-400 hover:text-white transition-colors">⏭</button>
         </div>
-        {/* Progress bar */}
         <div className="w-full flex items-center gap-2">
           <span className="text-xs text-slate-500">{formatTime(progress)}</span>
           <div className="h-1 flex-1 bg-slate-800 rounded-full overflow-hidden relative cursor-pointer" 
@@ -235,8 +309,8 @@ export default function BottomPlayer() {
         </div>
       </div>
 
-      {/* Extra controls (Timer, Volume) - Hidden on mobile */}
-      <div className="hidden md:flex items-center justify-end gap-6 w-1/3 order-2 md:order-3 text-slate-400">
+      {/* Extra controls */}
+      <div className="hidden md:flex items-center justify-end gap-6 w-1/3 order-2 md:order-3 text-slate-400" onClick={e => e.stopPropagation()}>
         <div className="flex items-center gap-3">
           <button onClick={toggleTimer} className="hover:text-white transition-colors flex items-center gap-2" title="Toggle Pomodoro Timer">
             <span>⏱</span>
@@ -244,11 +318,8 @@ export default function BottomPlayer() {
               {formatTime(timeLeft)}
             </span>
           </button>
-          <button onClick={resetTimer} className="text-xs hover:text-white" title="Reset Timer">
-            ↺
-          </button>
+          <button onClick={resetTimer} className="text-xs hover:text-white" title="Reset Timer">↺</button>
         </div>
-        
         <div className="flex items-center gap-2">
           <span>🔊</span>
           <input
