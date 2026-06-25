@@ -43,7 +43,11 @@ const MUSIC_ICONS = [
   "M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z",
 ];
 
-function TrackCoverArt({ title, category }: { title: string; category: string }) {
+function TrackCoverArt({ title, category, coverUrl }: { title: string; category: string; coverUrl?: string }) {
+  if (coverUrl) {
+    return <img src={coverUrl} alt={title} className="w-full h-full object-cover" />;
+  }
+
   const palIdx = hashString(title + category) % COVER_PALETTES.length;
   const iconIdx = hashString(title) % MUSIC_ICONS.length;
   const palette = COVER_PALETTES[palIdx];
@@ -117,7 +121,7 @@ export default function MainTracksContainer({
                   {/* Left Side: Cover Art + Title + Category */}
                   <div className="flex items-center gap-4 w-1/2">
                     <div className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 shadow-md transition-shadow group-hover:shadow-lg">
-                      <TrackCoverArt title={track.title} category={track.category} />
+                      <TrackCoverArt title={track.title} category={track.category} coverUrl={track.cover_url} />
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="white" className="ml-0.5">
                           <path d="M8 5v14l11-7z"/>

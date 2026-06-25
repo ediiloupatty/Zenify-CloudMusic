@@ -28,7 +28,11 @@ const ICON_PATHS = [
   "M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z",
 ];
 
-function TrackMini({ title, category }: { title: string; category: string }) {
+function TrackMini({ title, category, coverUrl }: { title: string; category: string; coverUrl?: string }) {
+  if (coverUrl) {
+    return <img src={coverUrl} alt={title} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />;
+  }
+
   const pal = PALETTES[hashString(title + category) % PALETTES.length];
   const icon = ICON_PATHS[hashString(title) % ICON_PATHS.length];
   return (
@@ -562,7 +566,7 @@ export default function AdminPage() {
                       </span>
 
                       {/* Cover art */}
-                      <TrackMini title={track.title} category={track.category} />
+                      <TrackMini title={track.title} category={track.category} coverUrl={track.cover_url} />
 
                       {/* Info */}
                       <div className="flex-1 min-w-0">

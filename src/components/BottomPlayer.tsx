@@ -61,7 +61,11 @@ const MUSIC_ICON_PATHS = [
   "M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z",
 ];
 
-function LargeCoverArt({ title, category, size = "lg" }: { title: string; category: string; size?: "sm" | "lg" }) {
+function LargeCoverArt({ title, category, coverUrl, size = "lg" }: { title: string; category: string; coverUrl?: string; size?: "sm" | "lg" }) {
+  if (coverUrl) {
+    return <img src={coverUrl} alt={title} className="w-full h-full object-cover drop-shadow-2xl" />;
+  }
+
   const palIdx = hashString(title + category) % COVER_PALETTES.length;
   const iconIdx = hashString(title) % MUSIC_ICON_PATHS.length;
   const palette = COVER_PALETTES[palIdx];
@@ -353,7 +357,22 @@ export default function BottomPlayer() {
           className="fixed inset-0 h-screen w-screen z-[100] flex flex-col bg-[#1e2535]/95 backdrop-blur-3xl overflow-hidden"
           onContextMenu={(e) => e.preventDefault()}
         >
-          <NeuronVisualizer analyser={analyserRef.current} />
+          {currentTrack.cover_url && (
+            <div 
+              className="absolute inset-0 z-0 opacity-40 mix-blend-screen pointer-events-none"
+              style={{
+                backgroundImage: `url(${currentTrack.cover_url})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                filter: 'blur(80px)',
+                transform: 'scale(1.2)'
+              }}
+            />
+          )}
+          
+          <div className="absolute inset-0 z-0 pointer-events-none">
+            <NeuronVisualizer analyser={analyserRef.current} />
+          </div>
 
           {/* ── TOP BAR ─────────────────────────────────────────────────── */}
           <div className="relative z-10 flex items-center justify-between px-5 pt-5 pb-2 flex-shrink-0">
@@ -410,7 +429,7 @@ export default function BottomPlayer() {
                 className="w-56 h-56 sm:w-64 sm:h-64 lg:w-72 lg:h-72 rounded-3xl overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.6)] flex-shrink-0 mt-2 mb-6"
                 style={{ boxShadow: `0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(0,0,0,0.3)` }}
               >
-                <LargeCoverArt title={currentTrack.title} category={currentTrack.category} size="lg" />
+                <LargeCoverArt title={currentTrack.title} category={currentTrack.category} coverUrl={currentTrack.cover_url} size="lg" />
               </div>
 
               {/* Track Meta */}
@@ -618,7 +637,7 @@ export default function BottomPlayer() {
           {/* Left: Track Info */}
           <div className="flex items-center gap-3 md:gap-4 w-full md:w-1/4 xl:w-1/5 order-1">
             <div className="w-12 h-12 md:w-14 md:h-14 rounded-lg overflow-hidden flex-shrink-0 shadow-md">
-              <LargeCoverArt title={currentTrack.title} category={currentTrack.category} size="sm" />
+              <LargeCoverArt title={currentTrack.title} category={currentTrack.category} coverUrl={currentTrack.cover_url} size="sm" />
             </div>
             <div className="flex flex-col overflow-hidden flex-1 min-w-0">
               <div className="font-bold text-white text-sm truncate flex items-center gap-2">
