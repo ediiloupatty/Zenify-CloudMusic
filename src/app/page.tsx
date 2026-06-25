@@ -133,7 +133,7 @@ export default async function Home({
           </div>
 
           {/* Search Bar */}
-          <div className="flex-1 max-w-[420px] flex items-center gap-2 bg-white/5 border border-white/[0.08] rounded-full px-4 py-2.5 focus-within:bg-white/8 focus-within:border-white/15 transition-all">
+          <div className="flex-1 max-w-[420px] flex items-center gap-2 bg-white/5 backdrop-blur-xl border border-white/[0.08] rounded-full px-4 py-2.5 focus-within:bg-white/10 focus-within:border-white/20 focus-within:shadow-[0_0_15px_rgba(255,255,255,0.05)] transition-all">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-slate-400 flex-shrink-0">
               <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
             </svg>
@@ -145,11 +145,11 @@ export default async function Home({
           </div>
 
           {/* Notification bell */}
-          <button className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-300 relative transition-colors">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <button className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-300 relative transition-all hover:shadow-[0_0_15px_rgba(255,255,255,0.05)] group">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="group-hover:scale-110 transition-transform">
               <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
             </svg>
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-[#0d0d12]" />
+            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-[#0d0d12] animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
           </button>
         </header>
 
@@ -174,13 +174,21 @@ export default async function Home({
                       className="snap-start flex-shrink-0">
                       <div className="flex flex-col w-[190px] group cursor-pointer">
                         {/* Card image area */}
-                        <div className={`w-[190px] h-[190px] rounded-2xl mb-3 shadow-lg overflow-hidden relative bg-gradient-to-br ${cat.bgGradient} transition-transform duration-300 group-hover:-translate-y-2 ${isActive ? 'ring-2 ring-white/60 shadow-[0_0_20px_rgba(255,255,255,0.15)]' : ''}`}>
+                        <div className={`w-[190px] h-[190px] rounded-2xl mb-3 shadow-lg overflow-hidden relative bg-gradient-to-br ${cat.bgGradient} transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-[0_12px_30px_rgba(0,0,0,0.5)] ${isActive ? 'ring-2 ring-white/60 shadow-[0_0_20px_rgba(255,255,255,0.15)]' : ''}`}>
                           {/* overlay tint */}
-                          <div className="absolute inset-0 bg-black/10 z-[1]" />
+                          <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors duration-500 z-[1]" />
                           {/* background texture */}
-                          <img src={cat.image} alt="" className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-40 z-0" />
+                          <img src={cat.image} alt="" className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-40 group-hover:opacity-60 group-hover:scale-110 transition-all duration-500 z-0" />
+                          
+                          {/* Play Button overlay */}
+                          <div className="absolute bottom-3 right-3 z-[3] translate-y-8 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+                             <div className="w-10 h-10 rounded-full bg-teal-500 text-white flex items-center justify-center shadow-[0_0_15px_rgba(45,212,191,0.5)] hover:scale-110 hover:bg-teal-400 transition-all">
+                               <span className="ml-1 text-lg">▶</span>
+                             </div>
+                          </div>
+
                           {/* Rating pill — always on top inside the card */}
-                          <div className="absolute bottom-3 right-3 z-[2] bg-black/40 backdrop-blur-sm px-2.5 py-1 rounded-full text-[11px] font-bold text-white flex items-center gap-1">
+                          <div className="absolute bottom-3 right-3 z-[2] bg-black/40 backdrop-blur-sm px-2.5 py-1 rounded-full text-[11px] font-bold text-white flex items-center gap-1 group-hover:opacity-0 transition-opacity duration-300">
                             4.5 <span className="text-yellow-300 text-xs">★</span>
                           </div>
                         </div>
@@ -210,12 +218,15 @@ export default async function Home({
             <div className="w-full lg:w-[280px] xl:w-[300px] flex flex-col gap-6 flex-shrink-0">
 
               {/* Upgrade banner */}
-              <div className="rounded-2xl p-5 relative overflow-hidden bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 shadow-[0_8px_24px_rgba(168,85,247,0.3)] min-h-[170px]">
-                <h3 className="text-xl font-bold text-white leading-snug">
+              <div className="rounded-2xl p-6 relative overflow-hidden bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 shadow-[0_8px_30px_rgba(168,85,247,0.3)] min-h-[170px] group cursor-pointer hover:shadow-[0_8px_40px_rgba(236,72,153,0.5)] transition-shadow duration-500">
+                {/* Animated shine effect via translate */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-[1500ms] skew-x-12 z-10" />
+                
+                <h3 className="text-xl font-extrabold text-white leading-snug drop-shadow-md z-20 relative">
                   Upgrade<br/>your account
                 </h3>
-                <div className="absolute -bottom-4 -right-2 text-7xl opacity-80 select-none">📻</div>
-                <button className="absolute bottom-3 right-3 w-9 h-9 rounded-full bg-black/20 hover:bg-black/40 flex items-center justify-center text-white transition-colors text-sm">
+                <div className="absolute -bottom-4 -right-2 text-7xl opacity-80 select-none group-hover:scale-110 group-hover:-rotate-12 transition-transform duration-500 z-0">📻</div>
+                <button className="absolute bottom-4 right-4 w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-md flex items-center justify-center text-white transition-all text-sm shadow-[0_0_15px_rgba(255,255,255,0.2)] group-hover:scale-110 z-20">
                   →
                 </button>
               </div>
@@ -229,16 +240,16 @@ export default async function Home({
                     { name: "The Weeknd", sub: "29 songs in library", rating: "4★", img: "https://images.unsplash.com/photo-1506157786151-b8491531f063?q=80&w=150" },
                     { name: "Lana Del Rey", sub: "12 songs in library", rating: "4★", img: "https://images.unsplash.com/photo-1493225457284-0bf53ce86e62?q=80&w=150" },
                   ].map((artist) => (
-                    <div key={artist.name} className="flex items-center gap-3 group cursor-pointer">
-                      <div className="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
-                        <img src={artist.img} alt={artist.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
-                        <div className="absolute top-0 right-0 bg-pink-500 text-[8px] font-bold px-1 rounded-full border border-[#0d0d12]">{artist.rating}</div>
+                    <div key={artist.name} className="flex items-center gap-3 group cursor-pointer p-2 -mx-2 rounded-xl hover:bg-white/5 transition-colors">
+                      <div className="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border-2 border-transparent group-hover:border-purple-500/50 transition-all duration-300 group-hover:shadow-[0_0_15px_rgba(168,85,247,0.4)]">
+                        <img src={artist.img} alt={artist.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                        <div className="absolute top-0 right-0 bg-pink-500 text-[8px] font-bold px-1 rounded-full border border-[#0d0d12] z-10">{artist.rating}</div>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-sm text-white leading-tight">{artist.name}</h4>
+                        <h4 className="font-bold text-sm text-white leading-tight group-hover:text-purple-300 transition-colors">{artist.name}</h4>
                         <p className="text-xs text-slate-400">{artist.sub}</p>
                       </div>
-                      <button className="text-slate-600 hover:text-slate-300 transition-colors text-sm font-bold">•••</button>
+                      <button className="text-slate-600 hover:text-slate-300 transition-colors text-sm font-bold opacity-0 group-hover:opacity-100">•••</button>
                     </div>
                   ))}
                 </div>

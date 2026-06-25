@@ -49,27 +49,32 @@ export default function MainTracksContainer({
                 >
                   {/* Left Side: Icon + Title + Category */}
                   <div className="flex items-center gap-4 w-1/2">
-                    <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-md">
-                      <span className="text-xl">🎵</span>
+                    <div className="relative w-12 h-12 rounded-lg bg-gradient-to-br from-indigo-500/80 to-purple-600/80 flex items-center justify-center flex-shrink-0 shadow-md overflow-hidden">
+                      <span className="text-xl group-hover:opacity-0 transition-opacity duration-300">🎵</span>
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <span className="text-white text-lg ml-0.5">▶</span>
+                      </div>
                     </div>
                     <div className="flex flex-col overflow-hidden">
-                      <span className="font-bold text-white text-sm truncate">{track.title}</span>
+                      <span className="font-bold text-white text-sm truncate group-hover:text-teal-400 transition-colors">{track.title}</span>
                       <span className="text-xs text-slate-400 truncate">{track.category}</span>
                     </div>
                   </div>
 
                   {/* Middle: Duration */}
                   <div className="w-16 text-center">
-                    <span className="text-xs text-slate-500">3:40</span> {/* Mock duration since we don't store it yet */}
+                    <span className="text-xs text-slate-500 group-hover:text-slate-300 transition-colors">3:40</span>
                   </div>
 
                   {/* Right Side: Rating + Favorite + Menu */}
                   <div className="flex items-center gap-4 justify-end w-1/4">
-                    <div className="hidden sm:flex items-center gap-1 text-xs font-bold text-yellow-500">
+                    <div className="hidden sm:flex items-center gap-1 text-xs font-bold text-yellow-500 opacity-50 group-hover:opacity-100 transition-opacity">
                       3 <span className="text-[10px]">★</span>
                     </div>
-                    <FavoriteButton trackId={track.id} initialIsFavorited={isFavorited} isLoggedIn={isLoggedIn} />
-                    <button className="text-slate-600 hover:text-white font-bold tracking-widest pl-2">••</button>
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <FavoriteButton trackId={track.id} initialIsFavorited={isFavorited} isLoggedIn={isLoggedIn} />
+                    </div>
+                    <button className="text-slate-600 hover:text-white font-bold tracking-widest pl-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">••</button>
                   </div>
                 </div>
               );
