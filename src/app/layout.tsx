@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { PlayerProvider } from "@/context/PlayerContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 import BottomPlayer from "@/components/BottomPlayer";
+import BottomNav from "@/components/BottomNav";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,13 +29,17 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      data-theme="dark"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
-        <PlayerProvider>
-          {children}
-          <BottomPlayer />
-        </PlayerProvider>
+      <body className="min-h-full flex flex-col" style={{ background: "var(--bg-base)", color: "var(--text-primary)" }}>
+        <ThemeProvider>
+          <PlayerProvider>
+            {children}
+            <BottomPlayer />
+            <BottomNav />
+          </PlayerProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
