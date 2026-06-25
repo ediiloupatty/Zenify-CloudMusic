@@ -33,12 +33,12 @@ export default async function Home({
       <aside className="hidden md:flex relative z-20 flex-col items-center w-[88px] py-7 flex-shrink-0 h-full border-r border-white/5 mr-8">
 
         {/* Avatar / logo */}
-        <div className="mb-10 w-11 h-11 rounded-full bg-slate-800 border-2 border-teal-500/30 shadow-[0_0_14px_rgba(45,212,191,0.2)] flex items-center justify-center flex-shrink-0 cursor-pointer relative hover:border-teal-400 hover:shadow-[0_0_20px_rgba(45,212,191,0.4)] transition-all">
+        <div className="mb-10 w-11 h-11 rounded-full bg-gradient-to-br from-teal-500 to-indigo-600 border-2 border-teal-500/40 shadow-[0_0_14px_rgba(45,212,191,0.3)] flex items-center justify-center flex-shrink-0 cursor-pointer relative hover:border-teal-400 hover:shadow-[0_0_20px_rgba(45,212,191,0.5)] transition-all">
           {isLoggedIn ? (
             <span className="font-bold text-white text-sm">{session.user?.name?.charAt(0) || "U"}</span>
           ) : (
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="text-slate-400 opacity-80">
-              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" className="text-white">
+              <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
             </svg>
           )}
           {isLoggedIn && (
@@ -111,16 +111,16 @@ export default async function Home({
           {/* Mobile Avatar / Logo */}
           <div className="md:hidden flex items-center justify-center flex-shrink-0">
             {isLoggedIn ? (
-              <div className="w-9 h-9 rounded-full bg-slate-800 border border-teal-500/30 flex items-center justify-center relative shadow-md">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-teal-500 to-indigo-600 border border-teal-500/40 flex items-center justify-center relative shadow-md">
                 <span className="font-bold text-white text-xs">{session.user?.name?.charAt(0) || "U"}</span>
                 <span className="absolute top-0 right-0 w-2 h-2 bg-teal-500 rounded-full border border-[#3B4252]" />
               </div>
             ) : (
-              <Link href="/login" className="w-9 h-9 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center shadow-md hover:border-slate-400 transition-colors">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="text-slate-400">
-                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-teal-500 to-indigo-600 border border-teal-500/40 flex items-center justify-center shadow-md">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="text-white">
+                  <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
                 </svg>
-              </Link>
+              </div>
             )}
           </div>
 
