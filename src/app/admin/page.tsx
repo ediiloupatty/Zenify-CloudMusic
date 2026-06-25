@@ -76,6 +76,66 @@ export default function AdminPage() {
     }
   }
 
+  async function handleDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setIsDragging(false);
+
+    const newFiles: File[] = [];
+
+    async function readEntry(entry: any) {
+      if (entry.isFile) {
+        const file = await new Promise<File>((resolve) => entry.file(resolve));
+        if (/\.(mp3|flac|wav|m4a)$/i.test(file.name)) {
+          newFiles.push(file);
+        }
+      } else if (entry.isDirectory) {
+        const reader = entry.createReader();
+        let entries: any[] = [];
+        const readBatch = async () => {
+          const batch = await new Promise<any[]>((resolve) => reader.readEntries(resolve));
+          if (batch.length > 0) {
+            entries = entries.concat(batch);
+            await readBatch();
+          }
+        };
+        await readBatch();
+        for (const child of entries) {
+          await readEntry(child);
+        }
+      }
+    }
+
+    if (e.dataTransfer.items) {
+      const promises = [];
+      for (let i = 0; i < e.dataTransfer.items.length; i++) {
+        const item = e.dataTransfer.items[i];
+        if (item.kind === 'file') {
+          const entry = item.webkitGetAsEntry ? item.webkitGetAsEntry() : (item as any).getAsEntry ? (item as any).getAsEntry() : null;
+          if (entry) {
+            promises.push(readEntry(entry));
+          } else {
+            const file = item.getAsFile();
+            if (file && /\.(mp3|flac|wav|m4a)$/i.test(file.name)) newFiles.push(file);
+          }
+        }
+      }
+      await Promise.all(promises);
+    } else {
+      for (let i = 0; i < e.dataTransfer.files.length; i++) {
+        const file = e.dataTransfer.files[i];
+        if (/\.(mp3|flac|wav|m4a)$/i.test(file.name)) newFiles.push(file);
+      }
+    }
+
+    if (newFiles.length > 0) {
+      setSelectedFiles(prev => {
+        const existingNames = new Set(prev.map(f => f.name));
+        const newUniqueFiles = newFiles.filter(f => !existingNames.has(f.name));
+        return [...prev, ...newUniqueFiles];
+      });
+    }
+  }
+
   function removeFile(idx: number) {
     setSelectedFiles(prev => prev.filter((_, i) => i !== idx));
   }
@@ -251,7 +311,7 @@ export default function AdminPage() {
                     }}
                     onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
                     onDragLeave={() => setIsDragging(false)}
-                    onDrop={e => { e.preventDefault(); setIsDragging(false); handleFiles(e.dataTransfer.files); }}
+                    onDrop={handleDrop}
                     onClick={() => selectedFiles.length === 0 && fileInputRef.current?.click()}
                   >
                     <input
