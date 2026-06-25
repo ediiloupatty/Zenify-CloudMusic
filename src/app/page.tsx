@@ -35,8 +35,8 @@ export default async function Home({
       <div className="pointer-events-none absolute top-0 right-0 w-[700px] h-[700px] bg-gradient-to-bl from-rose-900/25 via-purple-900/10 to-transparent rounded-full blur-[130px]" />
       <div className="pointer-events-none absolute bottom-0 left-0 w-[500px] h-[500px] bg-gradient-to-tr from-indigo-900/20 to-transparent rounded-full blur-[100px]" />
 
-      {/* ─── SIDEBAR ──────────────────────────────────────────────── */}
-      <aside className="relative z-20 flex flex-col items-center w-[72px] md:w-[88px] py-7 flex-shrink-0 h-full border-r border-white/5 mr-4 md:mr-8">
+      {/* ─── DESKTOP SIDEBAR ──────────────────────────────────────────────── */}
+      <aside className="hidden md:flex relative z-20 flex-col items-center w-[88px] py-7 flex-shrink-0 h-full border-r border-white/5 mr-8">
 
         {/* Avatar / logo */}
         <div className="mb-10 w-11 h-11 rounded-full bg-gradient-to-br from-red-500 to-purple-600 border-2 border-white/10 shadow-[0_0_14px_rgba(239,68,68,0.35)] flex items-center justify-center flex-shrink-0 cursor-pointer relative">
@@ -110,21 +110,38 @@ export default async function Home({
       <div className="relative z-10 flex-1 flex flex-col overflow-hidden">
 
         {/* TOP BAR */}
-        <header className="flex items-center justify-between px-6 md:px-8 pt-7 pb-5 flex-shrink-0">
-          {/* Back / Forward + Search */}
-          <div className="flex items-center gap-3">
+        <header className="flex items-center justify-between px-4 md:px-8 pt-5 md:pt-7 pb-4 md:pb-5 flex-shrink-0 gap-3">
+          
+          {/* Mobile Avatar / Logo */}
+          <div className="md:hidden flex items-center justify-center flex-shrink-0">
+            {isLoggedIn ? (
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-red-500 to-purple-600 flex items-center justify-center relative shadow-md">
+                <span className="font-bold text-white text-xs">{session.user?.name?.charAt(0) || "U"}</span>
+                <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-[#0d0d12]" />
+              </div>
+            ) : (
+              <Link href="/login">
+                <Image src="/logo.png" alt="Logo" width={36} height={36} className="object-cover opacity-80" />
+              </Link>
+            )}
+          </div>
+
+          {/* Desktop Back/Forward */}
+          <div className="hidden md:flex items-center gap-3">
             <button className="text-slate-500 hover:text-white text-lg leading-none transition-colors">‹</button>
             <button className="text-slate-600 hover:text-white text-lg leading-none transition-colors">›</button>
-            <div className="ml-3 flex items-center gap-2 bg-white/5 border border-white/[0.08] rounded-full px-4 py-2.5 w-56 md:w-80 lg:w-[420px] focus-within:bg-white/8 focus-within:border-white/15 transition-all">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-slate-400 flex-shrink-0">
-                <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-              </svg>
-              <input
-                type="text"
-                placeholder="Search for categories, songs..."
-                className="bg-transparent border-none outline-none text-sm text-white placeholder-slate-500 w-full"
-              />
-            </div>
+          </div>
+
+          {/* Search Bar */}
+          <div className="flex-1 max-w-[420px] flex items-center gap-2 bg-white/5 border border-white/[0.08] rounded-full px-4 py-2.5 focus-within:bg-white/8 focus-within:border-white/15 transition-all">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-slate-400 flex-shrink-0">
+              <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+            </svg>
+            <input
+              type="text"
+              placeholder="Search..."
+              className="bg-transparent border-none outline-none text-sm text-white placeholder-slate-500 w-full"
+            />
           </div>
 
           {/* Notification bell */}
@@ -137,7 +154,7 @@ export default async function Home({
         </header>
 
         {/* SCROLLABLE CONTENT */}
-        <div className="flex-1 overflow-y-auto px-6 md:px-8 pb-36">
+        <div className="flex-1 overflow-y-auto px-4 md:px-8 pb-36">
           <div className="flex flex-col lg:flex-row gap-8 w-full">
 
             {/* ── LEFT COLUMN ── */}
