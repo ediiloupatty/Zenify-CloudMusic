@@ -4,7 +4,6 @@ import { getTracksByCategory, getUserFavorites, Track } from "@/lib/cloudflare";
 import { auth, signOut } from "@/auth";
 import { CATEGORIES } from "@/lib/constants";
 import DynamicBackground from "@/components/DynamicBackground";
-import ThemeToggleButton from "@/components/ThemeToggleButton";
 
 export const dynamic = "force-dynamic";
 
@@ -212,7 +211,6 @@ export default async function Home({
 
           {/* Theme toggle + notification */}
           <div className="flex items-center gap-2">
-            <ThemeToggleButton />
             <button
               className="w-10 h-10 rounded-full flex items-center justify-center relative transition-all"
               style={{ background: "var(--bg-card)", color: "var(--text-secondary)" }}

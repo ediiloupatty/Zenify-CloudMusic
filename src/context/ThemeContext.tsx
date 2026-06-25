@@ -5,31 +5,25 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 type Theme = "dark" | "light";
 
 interface ThemeContextType {
-  theme: Theme;
   reducedMotion: boolean;
-  toggleTheme: () => void;
   toggleReducedMotion: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("dark");
   const [reducedMotion, setReducedMotion] = useState(false);
 
   // Load from localStorage on mount
   useEffect(() => {
-    const savedTheme = localStorage.getItem("zenify-theme") as Theme | null;
     const savedMotion = localStorage.getItem("zenify-reduced-motion");
-    if (savedTheme) setTheme(savedTheme);
     if (savedMotion === "true") setReducedMotion(true);
   }, []);
 
-  // Apply theme to <html> element
+  // Force dark theme
   useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("zenify-theme", theme);
-  }, [theme]);
+    document.documentElement.setAttribute("data-theme", "dark");
+  }, []);
 
   // Apply reduced motion to <html> element
   useEffect(() => {
@@ -37,11 +31,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("zenify-reduced-motion", String(reducedMotion));
   }, [reducedMotion]);
 
-  const toggleTheme = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
   const toggleReducedMotion = () => setReducedMotion((m) => !m);
 
   return (
-    <ThemeContext.Provider value={{ theme, reducedMotion, toggleTheme, toggleReducedMotion }}>
+    <ThemeContext.Provider value={{ reducedMotion, toggleReducedMotion }}>
       {children}
     </ThemeContext.Provider>
   );

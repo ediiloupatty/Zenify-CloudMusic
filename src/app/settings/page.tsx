@@ -4,7 +4,7 @@ import { useTheme } from "@/context/ThemeContext";
 import Link from "next/link";
 
 export default function SettingsPage() {
-  const { theme, reducedMotion, toggleTheme, toggleReducedMotion } = useTheme();
+  const { reducedMotion, toggleReducedMotion } = useTheme();
 
   return (
     <div
@@ -45,50 +45,6 @@ export default function SettingsPage() {
             className="rounded-2xl overflow-hidden"
             style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-card)" }}
           >
-            {/* Theme Toggle */}
-            <div className="flex items-center justify-between px-4 py-4">
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-9 h-9 rounded-xl flex items-center justify-center"
-                  style={{ background: "var(--accent-glow)", color: "var(--accent)" }}
-                >
-                  {theme === "dark" ? (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z" />
-                    </svg>
-                  ) : (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M6.76 4.84l-1.8-1.79-1.41 1.41 1.79 1.79 1.42-1.41zM4 10.5H1v2h3v-2zm9-9.95h-2V3.5h2V.55zm7.45 3.91l-1.41-1.41-1.79 1.79 1.41 1.41 1.79-1.79zm-3.21 13.7l1.79 1.8 1.41-1.41-1.8-1.79-1.4 1.4zM20 10.5v2h3v-2h-3zm-8-5c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm-1 16.95h2V19.5h-2v2.95zm-7.45-3.91l1.41 1.41 1.79-1.8-1.41-1.41-1.79 1.8z" />
-                    </svg>
-                  )}
-                </div>
-                <div>
-                  <p className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>
-                    Theme
-                  </p>
-                  <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                    {theme === "dark" ? "Dark mode" : "Light mode"}
-                  </p>
-                </div>
-              </div>
-              {/* Toggle switch */}
-              <button
-                onClick={toggleTheme}
-                className="relative w-12 h-6 rounded-full transition-all duration-300 focus:outline-none"
-                style={{
-                  background: theme === "light" ? "var(--accent)" : "var(--bg-card-hover)",
-                  border: "1px solid var(--border-card)",
-                }}
-              >
-                <span
-                  className="absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-all duration-300"
-                  style={{ left: theme === "light" ? "calc(100% - 1.375rem)" : "0.125rem" }}
-                />
-              </button>
-            </div>
-
-            <div style={{ height: "1px", background: "var(--border-subtle)", margin: "0 1rem" }} />
-
             {/* Reduced Motion Toggle */}
             <div className="flex items-center justify-between px-4 py-4">
               <div className="flex items-center gap-3">
