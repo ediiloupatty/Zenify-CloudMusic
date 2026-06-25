@@ -19,9 +19,12 @@ export async function GET(
   }
 
   try {
+    const rangeHeader = request.headers.get("range");
+
     const command = new GetObjectCommand({
       Bucket: bucketName,
       Key: filename,
+      Range: rangeHeader || undefined,
     });
 
     const response = await r2Client.send(command);
@@ -42,15 +45,15 @@ export async function GET(
 
     const headers = new Headers();
     headers.set("Content-Type", contentType);
-    // Allow inline playback without forcing download
     headers.set("Content-Disposition", `inline; filename="${filename}"`);
     
     if (response.ContentLength) headers.set("Content-Length", response.ContentLength.toString());
+    if (response.ContentRange) headers.set("Content-Range", response.ContentRange);
     headers.set("Accept-Ranges", "bytes");
-    headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
-    headers.set("Pragma", "no-cache");
 
-    return new NextResponse(stream, { headers });
+    const status = response.ContentRange ? 206 : 200;
+
+    return new NextResponse(stream, { status, headers });
   } catch (error: any) {
     console.error("Error streaming audio:", error);
     return new NextResponse("Internal Server Error", { status: 500 });
