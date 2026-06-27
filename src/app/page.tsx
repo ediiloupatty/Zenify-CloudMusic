@@ -2,11 +2,12 @@ import Link from "next/link";
 import PlaylistSection from "@/components/PlaylistSection";
 import HomeContent from "@/components/HomeContent";
 import Sidebar from "@/components/Sidebar";
-import { getTracksByCategory, getTracksByAlbum, getRecentlyPlayed, getNewTracks, getUserFavorites, getArtists, getPlaylists, getPlaylistById, Track } from "@/lib/cloudflare";
+import { getTracksByCategory, getTracksByAlbum, getRecentlyPlayed, getNewTracks, getUserFavorites, getArtists, getPlaylists, getPlaylistById, getTrackById, Track } from "@/lib/cloudflare";
 import { auth, signOut } from "@/auth";
 import PlaylistDetail from "@/components/PlaylistDetail";
 import DynamicBackground from "@/components/DynamicBackground";
 import ZenifyGlyph from "@/components/ZenifyGlyph";
+import AutoPlayTrack from "@/components/AutoPlayTrack";
 
 export default async function Home({
   searchParams,
@@ -17,6 +18,8 @@ export default async function Home({
   const currentCategory = (resolvedParams?.category as string) || null;
   const currentAlbum = (resolvedParams?.album as string) || null;
   const currentPlaylistId = (resolvedParams?.playlist as string) || null;
+  const playTrackId = (resolvedParams?.play as string) || null;
+  const autoPlayTrack = playTrackId ? await getTrackById(playTrackId) : null;
 
   const playlist = currentPlaylistId ? await getPlaylistById(currentPlaylistId) : null;
   const playlistTracks = playlist ? await getTracksByCategory(playlist.name) : [];
@@ -45,6 +48,7 @@ export default async function Home({
       style={{ background: "var(--bg-primary)", color: "var(--text-primary)" }}
     >
       <DynamicBackground />
+      {autoPlayTrack && <AutoPlayTrack track={autoPlayTrack} />}
 
       <Sidebar currentCategory={currentCategory} />
 

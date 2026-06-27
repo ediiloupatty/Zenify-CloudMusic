@@ -40,14 +40,41 @@ window.addEventListener('zenify:nowplaying', function (e) {
     bar.onmousedown = function(){ call('winDragStart'); };
     bar.ondblclick = function(){ call('winToggleMaximize'); };
 
-    bar.innerHTML = '<div style="display:flex;align-items:center;gap:8px;padding:0 12px;height:100%;pointer-events:none">' +
-      '<svg width="14" height="14" viewBox="0 0 24 24" fill="#14b8a6">' +
+    // Left: back / forward nav
+    var navBtn = 'height:28px;width:28px;display:flex;align-items:center;justify-content:center;background:transparent;border:0;border-radius:6px;color:#9aa3af;cursor:default;transition:background .15s,color .15s;-webkit-app-region:no-drag;padding:0';
+    var back = document.createElement('button');
+    back.style.cssText = navBtn;
+    back.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="10 4 6 8 10 12"/></svg>';
+    back.onmousedown = function(e){ e.stopPropagation(); };
+    back.onmouseenter = function(){ back.style.background='rgba(255,255,255,.08)'; back.style.color='#fff'; };
+    back.onmouseleave = function(){ back.style.background='transparent'; back.style.color='#9aa3af'; };
+    back.onclick = function(){ window.history.back(); };
+
+    var fwd = document.createElement('button');
+    fwd.style.cssText = navBtn;
+    fwd.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 4 10 8 6 12"/></svg>';
+    fwd.onmousedown = function(e){ e.stopPropagation(); };
+    fwd.onmouseenter = function(){ fwd.style.background='rgba(255,255,255,.08)'; fwd.style.color='#fff'; };
+    fwd.onmouseleave = function(){ fwd.style.background='transparent'; fwd.style.color='#9aa3af'; };
+    fwd.onclick = function(){ window.history.forward(); };
+
+    var leftZone = document.createElement('div');
+    leftZone.style.cssText = 'display:flex;align-items:center;gap:2px;padding:0 8px;height:100%;min-width:100px';
+    leftZone.appendChild(back);
+    leftZone.appendChild(fwd);
+    bar.appendChild(leftZone);
+
+    // Center: logo + name
+    var center = document.createElement('div');
+    center.style.cssText = 'position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:7px;pointer-events:none';
+    center.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="#14b8a6">' +
       '<rect x="2.5" y="8" width="2.6" height="8" rx="1.3"/>' +
       '<rect x="6.6" y="5.5" width="2.6" height="13" rx="1.3"/>' +
       '<rect x="10.7" y="3.5" width="2.6" height="17" rx="1.3"/>' +
       '<rect x="14.8" y="6.5" width="2.6" height="11" rx="1.3"/>' +
       '<rect x="18.9" y="8.5" width="2.6" height="7" rx="1.3"/></svg>' +
-      '<span style="font-size:12px;font-weight:600;letter-spacing:.04em">Zenify</span></div>';
+      '<span style="font-size:12px;font-weight:600;letter-spacing:.04em;color:#e2e8f0">Zenify</span>';
+    bar.appendChild(center);
 
     var ctr = document.createElement('div');
     ctr.style.cssText = 'display:flex;align-items:center;height:100%';

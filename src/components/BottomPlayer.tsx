@@ -532,6 +532,7 @@ export default function BottomPlayer() {
     const audio = audioRef.current;
     const detail = currentTrack
       ? {
+          id: currentTrack.id,
           title: cleanTitle(currentTrack.title),
           artist: currentTrack.artist || currentTrack.category || "",
           album: currentTrack.album || "",
@@ -541,8 +542,9 @@ export default function BottomPlayer() {
           state: isPlaying ? "playing" : "paused",
           position: audio?.currentTime || 0,
           duration: audio?.duration || currentTrack.duration || 0,
+          appUrl: window.location.origin,
         }
-      : { title: "", artist: "", album: "", cover: "", state: "stopped", position: 0, duration: 0 };
+      : { id: "", title: "", artist: "", album: "", cover: "", state: "stopped", position: 0, duration: 0, appUrl: "" };
     window.dispatchEvent(new CustomEvent("zenify:nowplaying", { detail }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentTrack?.id, isPlaying]);

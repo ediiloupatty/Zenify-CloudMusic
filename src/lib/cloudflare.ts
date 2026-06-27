@@ -304,6 +304,17 @@ export const getTracksByCategory = cacheFn(
   { revalidate: 30 }
 );
 
+export async function getTrackById(id: string): Promise<Track | null> {
+  if (USE_MOCK) return MOCK_TRACKS.find((t) => t.id === id) ?? null;
+  try {
+    const rows = await queryD1(`${TRACK_SELECT_WITH_COVER} WHERE t.id = ? LIMIT 1`, [id]);
+    const track = (rows as Track[])[0];
+    return track ? normalizeTrack(track) : null;
+  } catch {
+    return null;
+  }
+}
+
 // Fetch all tracks belonging to a single album.
 export const getTracksByAlbum = cacheFn(
   async (album: string): Promise<Track[]> => {

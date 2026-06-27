@@ -36,6 +36,7 @@ const (
 
 // presence is the JSON shape emitted by the web page's CustomEvent detail.
 type presence struct {
+	ID       string  `json:"id"`
 	Title    string  `json:"title"`
 	Artist   string  `json:"artist"`
 	Album    string  `json:"album"`
@@ -43,6 +44,7 @@ type presence struct {
 	State    string  `json:"state"`    // "playing" | "paused" | "stopped"
 	Position float64 `json:"position"` // seconds into the track
 	Duration float64 `json:"duration"` // total track length in seconds
+	AppURL   string  `json:"appUrl"`   // origin of the web app for deep-link
 }
 
 func main() {
@@ -143,10 +145,14 @@ func discordWorker(updates <-chan presence, dynamicCover bool) {
 // buildActivity maps a now-playing snapshot to a Discord activity. Discord
 // requires any present details/state string to be 2–128 chars; shorter values
 // are omitted rather than rejected.
-func buildActivity(p presence, dynamicCover bool) client.Activity {
+func buildActivity(p presence, _ bool) client.Activity {
+	// Fetch a stable public cover URL from iTunes so Discord can display album
+	// art without needing a custom CDN. Falls back to the static zenify_logo asset.
 	large := assetLogo
-	if dynamicCover && strings.HasPrefix(p.Cover, "https://") {
-		large = p.Cover
+	if p.Title != "" || p.Artist != "" {
+		if u := fetchCoverURL(p.Artist, p.Title, p.Album); u != "" {
+			large = u
+		}
 	}
 
 	act := client.Activity{
@@ -179,6 +185,16 @@ func buildActivity(p presence, dynamicCover bool) client.Activity {
 			act.Details = "Idle"
 		}
 	}
+
+	// "Play on Zenify" button — deep-links directly to the track.
+	// Discord requires the URL to be a real https link, so we only add it when
+	// the app is running against a deployed (https) origin.
+	if p.AppURL != "" && p.ID != "" && strings.HasPrefix(p.AppURL, "https://") {
+		act.Buttons = []*client.Button{
+			{Label: "Play on Zenify", Url: p.AppURL + "/?play=" + p.ID},
+		}
+	}
+
 	return act
 }
 
