@@ -52,6 +52,27 @@ async function findOnDeezer(term: string): Promise<string | null> {
   return r?.cover_xl || r?.cover_big || r?.cover_medium || null;
 }
 
+// Artist profile photo. iTunes' Search API doesn't return artist images, so
+// this uses Deezer's artist endpoint only. Deezer serves a generic grey
+// silhouette (URL with an empty image hash, ".../artist//...") when the artist
+// has no real photo — we skip those so we never store a blank avatar.
+export async function fetchArtistImage(
+  artist: string | null | undefined
+): Promise<{ data: Buffer; source: "deezer" } | null> {
+  const name = (artist || "").trim();
+  if (!name) return null;
+
+  const data = await fetchJson(
+    `https://api.deezer.com/search/artist?q=${encodeURIComponent(name)}&limit=1`
+  );
+  const r = data?.data?.[0];
+  const pic: string | undefined = r?.picture_xl || r?.picture_big || r?.picture_medium;
+  if (!pic || /\/artist\/\//.test(pic)) return null;
+
+  const img = await downloadImage(pic);
+  return img ? { data: img, source: "deezer" } : null;
+}
+
 export type CoverQuery = { artist?: string | null; album?: string | null; title?: string | null };
 
 // Resolve the best matching cover and return its downloaded bytes, or null.

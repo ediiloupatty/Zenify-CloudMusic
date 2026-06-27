@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import * as mm from "music-metadata";
 import sharp from "sharp";
 import { cleanTitle } from "@/lib/cleanTitle";
-import { fetchCoverArt } from "@/lib/coverArt";
+import { fetchCoverArt, fetchArtistImage } from "@/lib/coverArt";
 import { assertAdmin } from "@/lib/admin";
 
 // Normalize a text value for duplicate comparison: lowercase, collapse
@@ -402,6 +402,79 @@ export async function backfillMissingCoversAction(): Promise<{
   } catch (error: any) {
     console.error("Backfill covers error:", error);
     return { success: false, error: error.message || "Failed to backfill covers" };
+  }
+}
+
+// Find a profile photo (Deezer) for every distinct track artist that doesn't
+// already have one, download it server-side, store it in R2 and upsert the
+// artists table. One lookup per artist; safe to re-run (only fills the blanks).
+export async function backfillMissingArtistImagesAction(): Promise<{
+  success: boolean;
+  updated?: number;
+  notFound?: number;
+  error?: string;
+}> {
+  await assertAdmin();
+  try {
+    await initializeD1Tables();
+    const bucketName = process.env.R2_BUCKET_NAME || "music";
+
+    // Distinct artists from the library, joined to any existing artist photo.
+    const rows = (await queryD1(`
+      SELECT DISTINCT t.artist AS artist, a.image_url AS image_url
+      FROM tracks t
+      LEFT JOIN artists a ON a.name = t.artist
+      WHERE t.artist IS NOT NULL AND t.artist != ''
+    `)) as { artist: string; image_url: string | null }[];
+
+    const missing = rows.filter((r) => !r.image_url);
+
+    let updated = 0;
+    let notFound = 0;
+    const handled = new Set<string>();
+
+    for (const row of missing) {
+      const name = (row.artist || "").trim();
+      if (!name || handled.has(name.toLowerCase())) continue;
+      handled.add(name.toLowerCase());
+
+      const found = await fetchArtistImage(name);
+      if (!found) {
+        notFound++;
+        continue;
+      }
+
+      try {
+        const imgData = await compressCoverImage(found.data);
+        const filename = `artist_${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`;
+        await r2Client.send(
+          new PutObjectCommand({
+            Bucket: bucketName,
+            Key: filename,
+            Body: imgData,
+            ContentType: "image/jpeg",
+            CacheControl: "public, max-age=31536000, immutable",
+          })
+        );
+        const imageUrl = `/api/cover/${filename}`;
+        await queryD1(
+          `INSERT INTO artists (name, image_url) VALUES (?, ?)
+           ON CONFLICT(name) DO UPDATE SET image_url = excluded.image_url`,
+          [name, imageUrl]
+        );
+        updated++;
+      } catch (e) {
+        console.warn("Backfill artist image failed for", name, e);
+        notFound++;
+      }
+    }
+
+    revalidatePath("/");
+    revalidatePath("/admin");
+    return { success: true, updated, notFound };
+  } catch (error: any) {
+    console.error("Backfill artist images error:", error);
+    return { success: false, error: error.message || "Failed to backfill artist images" };
   }
 }
 

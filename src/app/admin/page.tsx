@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import useSWR from "swr";
 import Link from "next/link";
-import { uploadTrackAction, deleteTrackAction, updateTrackAction, recleanAllTitlesAction, backfillAudioSpecsAction, compressAllCoversAction, backfillMissingCoversAction } from "./actions";
+import { uploadTrackAction, deleteTrackAction, updateTrackAction, recleanAllTitlesAction, backfillAudioSpecsAction, compressAllCoversAction, backfillMissingCoversAction, backfillMissingArtistImagesAction } from "./actions";
 import { cleanTitle } from "@/lib/cleanTitle";
 import AlbumManager from "@/components/AlbumManager";
 import ArtistManager from "@/components/ArtistManager";
@@ -91,6 +91,7 @@ export default function AdminPage() {
   const [fetchingSpecs, setFetchingSpecs]   = useState(false);
   const [compressingCovers, setCompressingCovers] = useState(false);
   const [fetchingCovers, setFetchingCovers] = useState(false);
+  const [fetchingArtists, setFetchingArtists] = useState(false);
   const previewAudioRef = useRef<HTMLAudioElement>(null);
 
   // Active tab — each major section is its own view instead of one long page.
@@ -262,6 +263,29 @@ export default function AdminPage() {
       });
     } else {
       setMessage({ type: "error", text: res.error || "Failed to find covers" });
+    }
+    setTimeout(() => setMessage(null), 4000);
+  }
+
+  // ── Find missing artist photos (Deezer lookup) ────────────────────────
+  async function handleFetchArtists() {
+    setFetchingArtists(true);
+    const res = await backfillMissingArtistImagesAction();
+    setFetchingArtists(false);
+    if (res.success) {
+      mutate();
+      const found = res.updated || 0;
+      const missing = res.notFound || 0;
+      setMessage({
+        type: "success",
+        text: found
+          ? `Found photos for ${found} artist${found > 1 ? "s" : ""}${missing ? `, ${missing} not found` : ""}.`
+          : missing
+          ? `No artist photos found (${missing} still missing).`
+          : "All artists already have photos.",
+      });
+    } else {
+      setMessage({ type: "error", text: res.error || "Failed to find artist photos" });
     }
     setTimeout(() => setMessage(null), 4000);
   }
@@ -781,6 +805,27 @@ export default function AdminPage() {
                     </svg>
                   )}
                   <span className="hidden sm:inline">{fetchingCovers ? "Searching..." : "Find covers"}</span>
+                </button>
+
+                {/* Find missing artist photos (Deezer) */}
+                <button
+                  onClick={handleFetchArtists}
+                  disabled={fetchingArtists || tracks.length === 0}
+                  title="Search Deezer for a profile photo of artists that have none, download it server-side and store it in R2. Safe to run repeatedly; one lookup per artist."
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all active:scale-95 disabled:opacity-40"
+                  style={{ background: "rgba(168,85,247,0.12)", border: "1px solid rgba(168,85,247,0.25)", color: "#d8b4fe" }}
+                >
+                  {fetchingArtists ? (
+                    <svg className="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                  ) : (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                    </svg>
+                  )}
+                  <span className="hidden sm:inline">{fetchingArtists ? "Searching..." : "Find artist images"}</span>
                 </button>
 
                 {/* Search */}
