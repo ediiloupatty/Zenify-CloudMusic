@@ -8,6 +8,7 @@ import { Track } from "@/lib/cloudflare";
 import { usePlayer } from "@/context/PlayerContext";
 import { cleanTitle } from "@/lib/cleanTitle";
 import { moveTrackToPlaylistAction } from "@/app/actions/tracks";
+import { useIncrementalList } from "./useIncrementalList";
 
 // Generate a consistent index from a string
 function hashString(str: string): number {
@@ -119,6 +120,10 @@ export default function MainTracksContainer({
 
   const displayTracks: Track[] = data?.tracks || initialTracks;
 
+  // Render ~40 rows first; reveal more as the user scrolls (keeps the DOM light
+  // for large libraries). The full array is still handed to the player below.
+  const { visibleCount, sentinelRef, hasMore } = useIncrementalList(displayTracks.length);
+
   const currentPlayingId = playerTracks[currentTrackIndex]?.id;
 
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
@@ -181,7 +186,7 @@ export default function MainTracksContainer({
                 <span className="flex-shrink-0" style={{ width: isLoggedIn ? "4rem" : "1.75rem" }} />
               </div>
             )}
-            {displayTracks.map((track, idx) => {
+            {displayTracks.slice(0, visibleCount).map((track, idx) => {
               const isFavorited = userFavorites.includes(track.id);
               const isCurrent = !!currentPlayingId && track.id === currentPlayingId;
               const dur = formatDuration(track.duration);
@@ -361,6 +366,8 @@ export default function MainTracksContainer({
                 </div>
               );
             })}
+            {/* Scroll sentinel: reveals the next batch of rows as it nears view. */}
+            {hasMore && <div ref={sentinelRef} className="h-1 w-full" aria-hidden />}
           </div>
         )}
       </div>

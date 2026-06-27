@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Track, Playlist } from "@/lib/cloudflare";
 import { usePlayer } from "@/context/PlayerContext";
 import { useCoverColor } from "@/lib/useCoverColor";
+import { useIncrementalList } from "./useIncrementalList";
 
 export default function PlaylistDetail({
   playlist,
@@ -13,7 +14,10 @@ export default function PlaylistDetail({
   tracks: Track[];
 }) {
   const { playTrack, tracks: playerTracks, currentTrackIndex, isPlaying } = usePlayer();
-  
+
+  // Render ~40 rows first; reveal more on scroll. Full array still feeds the player.
+  const { visibleCount, sentinelRef, hasMore } = useIncrementalList(tracks.length);
+
   const currentPlayingId = playerTracks[currentTrackIndex]?.id;
   const firstCoverUrl = tracks.find(t => t.cover_url)?.cover_url;
   // useCoverColor returns the dominant RGB of the cover (or null) — used to tint
@@ -136,7 +140,7 @@ export default function PlaylistDetail({
 
         {/* Table Body */}
         <div className="flex flex-col">
-          {tracks.map((track, index) => {
+          {tracks.slice(0, visibleCount).map((track, index) => {
             const isActive = currentPlayingId === track.id;
             
             // Format duration
@@ -216,6 +220,8 @@ export default function PlaylistDetail({
               </div>
             );
           })}
+          {/* Scroll sentinel: reveals the next batch of rows as it nears view. */}
+          {hasMore && <div ref={sentinelRef} className="h-1 w-full" aria-hidden />}
         </div>
       </div>
     </div>
