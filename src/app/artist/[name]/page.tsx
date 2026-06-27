@@ -45,7 +45,15 @@ export default async function ArtistPage({
     getAlbums(),
   ]);
 
-  const albums = allAlbums.filter((a) => a.artist === name);
+  // An album belongs on this artist's page if the artist actually has a track on
+  // it. Deriving the set from the artist's own tracks (same source as the track
+  // list + header count) is robust against albums whose `artist` column resolves
+  // to a different name — e.g. multi-artist/feat. albums where getAlbums()'s
+  // MAX(artist) picks another contributor.
+  const artistAlbumNames = new Set(
+    tracks.map((t) => t.album).filter((a): a is string => !!a && a.trim() !== "")
+  );
+  const albums = allAlbums.filter((a) => artistAlbumNames.has(a.name));
   const [c1, c2] = GRADIENTS[hashStr(name) % GRADIENTS.length];
 
   if (!info && tracks.length === 0) {

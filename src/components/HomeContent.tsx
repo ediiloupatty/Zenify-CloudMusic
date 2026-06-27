@@ -122,8 +122,16 @@ export default function HomeContent({
     const playerCurrent = playerTracks[currentTrackIndex];
     const featured = playerCurrent || recentlyPlayed[0] || tracks[0] || null;
 
-    const quickPlay = recentlyPlayed.slice(0, 5);
-    const songs = (newTracks.length ? newTracks : tracks).slice(0, 7);
+    // Recently played, minus whatever's already spotlighted in the hero, with a
+    // fallback to the library so the column never renders empty.
+    const recentBase = recentlyPlayed.length ? recentlyPlayed : tracks;
+    const recentList = recentBase.filter((t) => t.id !== featured?.id).slice(0, 5);
+
+    // "New Releases" when we actually have fresh tracks; otherwise a generic
+    // slice of the library (kept titled "Songs" so the heading stays honest).
+    const hasNew = newTracks.length > 0;
+    const songs = (hasNew ? newTracks : tracks).slice(0, 7);
+    const songsHeading = hasNew ? "New Releases" : "Songs";
 
     const isFeaturedPlaying =
       !!featured && !!playerCurrent && playerCurrent.id === featured.id && isPlaying;
@@ -242,19 +250,44 @@ export default function HomeContent({
                   </div>
                 </div>
 
-              {/* Quick Play */}
+              {/* Quick Access: Liked Songs shortcut + recently played */}
               <div className="w-full order-3 xl:max-w-[460px] xl:justify-self-end">
-                <SectionHeading title="Quick Play" href="/songs" />
+                <SectionHeading title="Recently Played" href="/songs" />
+                {/* Liked Songs quick-access tile */}
+                <Link
+                  href="/favorites"
+                  className="flex items-center gap-3 p-2 mb-2 rounded-xl transition-colors hover:bg-[var(--bg-card-hover)]"
+                >
+                  <div
+                    className="w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style={{ background: "linear-gradient(135deg, var(--accent), #6366f1)" }}
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                    </svg>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-sm truncate" style={{ color: "var(--text-primary)" }}>
+                      Liked Songs
+                    </p>
+                    <p className="text-xs truncate" style={{ color: "var(--text-muted)" }}>
+                      {userFavorites.length} {userFavorites.length === 1 ? "song" : "songs"}
+                    </p>
+                  </div>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="flex-shrink-0" style={{ color: "var(--text-muted)" }}>
+                    <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z" />
+                  </svg>
+                </Link>
                 <div className="flex flex-col gap-1">
-                  {quickPlay.map((t, i) => {
+                  {recentList.map((t, i) => {
                     const isCurrent = playerCurrent?.id === t.id;
                     return (
                       <div
                         key={t.id}
                         role="button"
                         tabIndex={0}
-                        onClick={() => playTrack(quickPlay, i)}
-                        onKeyDown={(e) => e.key === "Enter" && playTrack(quickPlay, i)}
+                        onClick={() => playTrack(recentList, i)}
+                        onKeyDown={(e) => e.key === "Enter" && playTrack(recentList, i)}
                         className="group flex items-center gap-3 p-2 rounded-xl cursor-pointer transition-colors hover:bg-[var(--bg-card-hover)]"
                         style={isCurrent ? { background: "var(--accent-glow)" } : undefined}
                       >
@@ -287,7 +320,7 @@ export default function HomeContent({
           {/* ─── SONGS TABLE ─────────────────────────────────────────── */}
           {songs.length > 0 && (
             <section className="mb-12">
-              <SectionHeading title="Songs" href="/songs" />
+              <SectionHeading title={songsHeading} href="/songs" />
               {/* Column header */}
               <div
                 className="hidden md:flex items-center gap-4 px-3 pb-2 mb-1 border-b text-[10px] font-bold tracking-wider uppercase"
