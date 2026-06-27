@@ -12,15 +12,23 @@ window.addEventListener('zenify:nowplaying', function (e) {
   try { window.zenifyPresence(e.detail); } catch (_) {}
 });
 
-// Reveal the window after the page's dark CSS is applied so there is no white
-// flash. A short delay lets the first paint settle before AnimateWindow runs.
+// Reveal the (off-screen) window only after the page has fully loaded AND the
+// browser has painted at least one frame — two rAFs guarantee the dark UI is on
+// screen before the window is moved into view, so there is no flash.
 (function revealOnReady() {
-  function show() { setTimeout(function(){ try { window.winReveal(); } catch(_){} }, 80); }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', show);
-  } else {
-    show();
+  var done = false;
+  function show() {
+    if (done) return; done = true;
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        try { window.winReveal(); } catch (_) {}
+      });
+    });
   }
+  if (document.readyState === 'complete') show();
+  else window.addEventListener('load', show);
+  // Fallback so the window can never get stuck off-screen.
+  setTimeout(show, 4000);
 })();
 
 (function () {
@@ -42,14 +50,17 @@ window.addEventListener('zenify:nowplaying', function (e) {
 
     var style = document.createElement('style');
     style.id = 'zenify-titlebar-style';
-    style.textContent = 'body{padding-top:32px !important}.h-screen{height:calc(100vh - 32px) !important}';
+    // Reserve the 32px for the title bar on normal (in-flow) pages, but NOT on
+    // full-screen fixed overlays (e.g. the expanded player) — those must stay a
+    // full 100vh so nothing leaks at the bottom; the title bar simply floats over
+    // their top via its higher z-index.
+    style.textContent = 'body{padding-top:32px !important}.h-screen:not(.fixed){height:calc(100vh - 32px) !important}';
     document.head.appendChild(style);
 
     var bar = document.createElement('div');
     bar.id = 'zenify-titlebar';
     bar.style.cssText = 'position:fixed;top:0;left:0;right:0;height:32px;z-index:2147483647;display:flex;align-items:center;justify-content:space-between;background:#0a0c11;border-bottom:1px solid rgba(255,255,255,.08);color:#9aa3af;user-select:none;font-family:system-ui,Segoe UI,sans-serif';
     bar.onmousedown = function(){ call('winDragStart'); };
-    bar.ondblclick = function(){ call('winToggleMaximize'); };
 
     // Left: back / forward nav
     var navBtn = 'height:28px;width:28px;display:flex;align-items:center;justify-content:center;background:transparent;border:0;border-radius:6px;color:#9aa3af;cursor:default;transition:background .15s,color .15s;-webkit-app-region:no-drag;padding:0';

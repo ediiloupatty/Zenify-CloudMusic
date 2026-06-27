@@ -704,8 +704,8 @@ export default function BottomPlayer() {
       {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       {isExpanded ? (
         <div
-          className="fixed inset-0 w-screen z-[100] flex flex-col backdrop-blur-3xl overflow-hidden"
-          style={{ background: ambientBg, top: desktopOffset, height: `calc(100vh - ${desktopOffset}px)` }}
+          className="fixed inset-0 h-screen w-screen z-[100] flex flex-col backdrop-blur-3xl overflow-hidden"
+          style={{ background: ambientBg }}
           onContextMenu={(e) => e.preventDefault()}
         >
           {currentTrack.cover_url && (
@@ -716,15 +716,13 @@ export default function BottomPlayer() {
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 filter: 'blur(80px)',
-                transform: 'scale(1.2)',
-                top: 0,
-                bottom: 0,
+                transform: 'scale(1.2)'
               }}
             />
           )}
           
           {/* â”€â”€ TOP BAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-          <div className="relative z-10 flex items-center justify-between px-5 pb-2 flex-shrink-0" style={{ paddingTop: desktopOffset > 0 ? 8 : 20 }}>
+          <div className="relative z-10 flex items-center justify-between px-5 pb-2 flex-shrink-0" style={{ paddingTop: desktopOffset > 0 ? desktopOffset + 10 : 20 }}>
             {/* Close */}
             <button 
               onClick={() => setIsExpanded(false)}

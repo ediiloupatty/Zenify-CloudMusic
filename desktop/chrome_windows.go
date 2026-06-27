@@ -24,17 +24,16 @@ var (
 )
 
 const (
-	gwlpWndProc  = ^uintptr(3)  // -4  GWL_WNDPROC
-	gwlExStyle   = ^uintptr(19) // -20 GWL_EXSTYLE
+	gwlpWndProc = ^uintptr(3) // -4  GWL_WNDPROC
 
-	wsExLayered = 0x00080000
-	lwaAlpha    = 0x00000002
-
+	swpNoSize      = 0x0001
 	swpNoZorder    = 0x0004
+	swpNoActivate  = 0x0010
 	swpFrameChange = 0x0020
 
 	swMinimize = 6
-	swShow     = 5
+
+	offscreen = ^uintptr(31999) // 2^64 - 32000 → -32000 as a 32-bit coordinate
 
 	wmNcCalcSize    = 0x0083
 	wmNcHitTest     = 0x0084
@@ -57,6 +56,8 @@ var (
 
 	savedRect   rect
 	isMaximized bool
+
+	revealRect rect // where to place the window once content is ready
 )
 
 // decorateWindow turns the window frameless (so the web draws its own title bar)
@@ -98,14 +99,13 @@ func setWindowIcon(hwnd uintptr) {
 // installFrameless subclasses the window so WM_NCCALCSIZE reports zero non-client
 // area (the title bar / borders vanish — no black strip — and the web content
 // fills the whole window). WM_NCHITTEST is handled to keep edge-resize working.
-// hideWindow makes the window invisible via a layered alpha=0 so WebView2 can
-// render in the background without the white-flash being visible. winReveal()
-// makes it opaque again — no minimize, no taskbar interaction needed.
-func hideWindow(hwnd uintptr) {
-	pSetLayered := user32.NewProc("SetLayeredWindowAttributes")
-	exStyle, _, _ := pGetWindowLong.Call(hwnd, gwlExStyle)
-	pSetWindowLong.Call(hwnd, gwlExStyle, exStyle|wsExLayered)
-	pSetLayered.Call(hwnd, 0, 0, lwaAlpha) // alpha = 0
+// hideOffscreen parks the window far off the visible desktop so WebView2 keeps
+// rendering normally (no layered-window glitches) while the dark page paints.
+// winReveal() then moves it to the centre of the screen — the user only ever
+// sees the finished, dark UI. No white/black flash.
+func hideOffscreen(hwnd uintptr) {
+	pGetWindowRect.Call(hwnd, uintptr(unsafe.Pointer(&revealRect)))
+	pSetWindowPos.Call(hwnd, 0, offscreen, offscreen, 0, 0, swpNoSize|swpNoZorder|swpNoActivate)
 }
 
 func installFrameless(hwnd uintptr) {
@@ -175,13 +175,29 @@ func hitTest(hwnd, lparam uintptr) uintptr {
 	return htClient
 }
 
-// winReveal makes the window fully opaque and brings it to the foreground.
-// Called from JS after DOMContentLoaded + a short delay so dark CSS is painted.
+// winReveal moves the (already fully-rendered) window from off-screen to the
+// centre of the current monitor and focuses it. Called from JS once the page has
+// loaded and painted.
 func winReveal(hwnd uintptr) {
-	pSetLayered := user32.NewProc("SetLayeredWindowAttributes")
-	pSetForeground := user32.NewProc("SetForegroundWindow")
-	pSetLayered.Call(hwnd, 0, 255, lwaAlpha) // alpha = 255 (fully opaque)
-	pSetForeground.Call(hwnd)
+	w := revealRect.Right - revealRect.Left
+	h := revealRect.Bottom - revealRect.Top
+	if w <= 0 {
+		w = 1100
+	}
+	if h <= 0 {
+		h = 720
+	}
+
+	hmon, _, _ := pMonitorFromWin.Call(hwnd, 2 /*MONITOR_DEFAULTTONEAREST*/)
+	var mi monitorInfo
+	mi.CbSize = uint32(unsafe.Sizeof(mi))
+	pGetMonitorInfo.Call(hmon, uintptr(unsafe.Pointer(&mi)))
+	wa := mi.RcWork
+
+	x := wa.Left + (wa.Right-wa.Left-w)/2
+	y := wa.Top + (wa.Bottom-wa.Top-h)/2
+	pSetWindowPos.Call(hwnd, 0, uintptr(x), uintptr(y), uintptr(w), uintptr(h), swpNoZorder)
+	user32.NewProc("SetForegroundWindow").Call(hwnd)
 }
 
 func winMinimize(hwnd uintptr) { pShowWindow.Call(hwnd, swMinimize) }

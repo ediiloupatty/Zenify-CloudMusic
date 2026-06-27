@@ -69,9 +69,9 @@ func main() {
 	hwnd := uintptr(w.Window())
 	decorateWindow(hwnd)
 
-	// Make the window invisible (alpha=0) so WebView2 renders in the background.
-	// The injected script calls winReveal() after the page's dark CSS is applied.
-	hideWindow(hwnd)
+	// Park the window off-screen so WebView2 renders the dark page without any
+	// visible flash; the injected script calls winReveal() once it has painted.
+	hideOffscreen(hwnd)
 	w.Bind("winReveal", func() { winReveal(hwnd) })
 
 	// Window controls invoked from the injected titlebar.
