@@ -99,7 +99,7 @@ export default function AlbumSection({
               >
                 {album.cover_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={album.cover_url} alt={album.name} className="w-full h-full object-cover" />
+                  <img src={album.cover_url} alt={album.name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 ) : (
                   <div
                     className="w-full h-full flex items-center justify-center"

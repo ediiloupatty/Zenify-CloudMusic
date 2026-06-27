@@ -595,7 +595,10 @@ export default function BottomPlayer() {
     ? `/api/audio/${rawUrl.split(".r2.dev/").pop()}`
     : rawUrl;
 
-  const hasLyrics = !!(currentTrack?.lyrics || externalLyrics || isFetchingLyrics);
+  // Always render the Lyrics tab/panel when a track is loaded. Tracks without
+  // lyrics fall back to a clear "no lyrics" message instead of the whole section
+  // silently disappearing. (currentTrack is guaranteed truthy past the guard below.)
+  const hasLyrics = !!currentTrack;
 
   if (!currentTrack) {
     return null;
@@ -1001,9 +1004,35 @@ export default function BottomPlayer() {
                           );
                         })}
                       </div>
-                    ) : (
+                    ) : currentTrack.lyrics ? (
+                      /* Plain-text lyrics (no timestamps to sync against) */
                       <div className="text-sm font-semibold leading-relaxed text-white/70 whitespace-pre-wrap pb-32">
-                        {currentTrack.lyrics || "Searching for lyrics..."}
+                        {currentTrack.lyrics}
+                      </div>
+                    ) : isFetchingLyrics ? (
+                      /* Still searching online for synced lyrics */
+                      <div className="flex items-center gap-2 text-sm font-semibold text-white/50 pb-32">
+                        <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
+                        Searching for lyrics…
+                      </div>
+                    ) : (
+                      /* No lyrics found anywhere — friendly empty state */
+                      <div className="flex flex-col items-center lg:items-start text-center lg:text-left gap-3 pb-32">
+                        <div
+                          className="w-12 h-12 rounded-full flex items-center justify-center"
+                          style={{ background: "rgba(255,255,255,0.07)" }}
+                        >
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M9 18V5l12-2v13" />
+                            <circle cx="6" cy="18" r="3" />
+                            <circle cx="18" cy="16" r="3" />
+                            <line x1="3" y1="3" x2="21" y2="21" />
+                          </svg>
+                        </div>
+                        <p className="text-base font-extrabold text-white/85">No lyrics available</p>
+                        <p className="text-xs leading-relaxed text-slate-400 max-w-[220px]">
+                          We couldn&apos;t find lyrics for this track. Sit back and enjoy the music. 🎵
+                        </p>
                       </div>
                     )}
                   </div>

@@ -41,7 +41,7 @@ function hashStr(s: string) {
 function Cover({ track, className = "" }: { track: Track; className?: string }) {
   if (track.cover_url) {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={track.cover_url} alt={track.title} className={`w-full h-full object-cover ${className}`} />;
+    return <img src={track.cover_url} alt={track.title} loading="lazy" decoding="async" className={`w-full h-full object-cover ${className}`} />;
   }
   const [c1, c2] = PALETTES[hashStr(track.title + track.category) % PALETTES.length];
   return (

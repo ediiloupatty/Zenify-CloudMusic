@@ -77,7 +77,7 @@ export default function ArtistAlbums({ albums, selectedName, onSelect }: Props) 
               >
                 {al.cover_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={al.cover_url} alt={al.name} className="w-full h-full object-cover" />
+                  <img src={al.cover_url} alt={al.name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${a1}, ${a2})` }}>
                     <svg width="30" height="30" viewBox="0 0 24 24" fill="white" className="opacity-80">

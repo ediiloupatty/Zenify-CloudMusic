@@ -51,7 +51,7 @@ const MUSIC_ICONS = [
 
 function TrackCoverArt({ title, category, coverUrl }: { title: string; category: string; coverUrl?: string }) {
   if (coverUrl) {
-    return <img src={coverUrl} alt={title} className="w-full h-full object-cover" />;
+    return <img src={coverUrl} alt={title} loading="lazy" decoding="async" className="w-full h-full object-cover" />;
   }
 
   const palIdx = hashString(title + category) % COVER_PALETTES.length;

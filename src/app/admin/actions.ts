@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import * as mm from "music-metadata";
 import sharp from "sharp";
 import { cleanTitle } from "@/lib/cleanTitle";
+import { fetchCoverArt } from "@/lib/coverArt";
 
 // Normalize a text value for duplicate comparison: lowercase, collapse
 // whitespace, drop surrounding spaces. Null/empty all map to "".
@@ -131,11 +132,22 @@ export async function uploadTrackAction(formData: FormData) {
     const publicR2Url = process.env.R2_PUBLIC_URL || `https://pub-xxxxxxxx.r2.dev`;
     const fileUrl = `${publicR2Url}/${uniqueFilename}`;
 
-    // 5. Upload cover art (if embedded) now that the track is confirmed new
+    // 5. Resolve cover art now that the track is confirmed new. Prefer the
+    //    file's embedded artwork; if there is none, auto-look it up online
+    //    (iTunes/Deezer) so tracks downloaded without art still get a cover.
     let coverUrl: string | null = null;
-    if (picture) {
+    let rawCover: Uint8Array | null = picture ? picture.data : null;
+    if (!rawCover) {
       try {
-        const coverData = await compressCoverImage(picture.data);
+        const found = await fetchCoverArt({ artist, album, title: finalTitle });
+        if (found) rawCover = found.data;
+      } catch (lookupErr) {
+        console.warn("Auto cover lookup failed:", lookupErr);
+      }
+    }
+    if (rawCover) {
+      try {
+        const coverData = await compressCoverImage(rawCover);
         const coverFilename = `cover_${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`;
         await r2Client.send(
           new PutObjectCommand({
@@ -285,6 +297,99 @@ export async function backfillAudioSpecsAction(): Promise<{ success: boolean; up
   } catch (error: any) {
     console.error("Backfill specs error:", error);
     return { success: false, error: error.message || "Failed to backfill audio specs" };
+  }
+}
+
+// Auto-find covers for tracks/albums that currently have NO art at all (no
+// embedded art, no sibling-track art, no manual album cover). Looks each one up
+// online (iTunes/Deezer) and stores the result. Album-level whenever an album
+// tag exists (one cover serves the whole record via the resolve JOIN), else
+// per-track. Safe to re-run — only touches items that still lack a cover.
+export async function backfillMissingCoversAction(): Promise<{
+  success: boolean;
+  updated?: number;
+  notFound?: number;
+  error?: string;
+}> {
+  try {
+    await initializeD1Tables();
+    const bucketName = process.env.R2_BUCKET_NAME || "music";
+
+    // Resolve each track's effective cover exactly like the app does, then keep
+    // only the ones that come up empty.
+    const rows = (await queryD1(`
+      SELECT t.id, t.title, t.artist, t.album,
+        COALESCE(a.cover_url, t.cover_url, ec.embedded_cover) AS effective_cover
+      FROM tracks t
+      LEFT JOIN albums a ON a.name = t.album
+      LEFT JOIN (
+        SELECT album, MAX(cover_url) AS embedded_cover
+        FROM tracks
+        WHERE cover_url IS NOT NULL AND album IS NOT NULL AND album != ''
+        GROUP BY album
+      ) ec ON ec.album = t.album
+    `)) as {
+      id: string;
+      title: string;
+      artist: string | null;
+      album: string | null;
+      effective_cover: string | null;
+    }[];
+
+    const missing = rows.filter((r) => !r.effective_cover);
+
+    let updated = 0;
+    let notFound = 0;
+    const handledAlbums = new Set<string>();
+
+    for (const row of missing) {
+      const album = (row.album || "").trim();
+      // An earlier track in this run already covered the whole album — skip.
+      if (album && handledAlbums.has(album.toLowerCase())) continue;
+
+      const found = await fetchCoverArt({ artist: row.artist, album, title: row.title });
+      if (!found) {
+        notFound++;
+        continue;
+      }
+
+      try {
+        const coverData = await compressCoverImage(found.data);
+        const prefix = album ? "album" : "cover";
+        const filename = `${prefix}_${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`;
+        await r2Client.send(
+          new PutObjectCommand({
+            Bucket: bucketName,
+            Key: filename,
+            Body: coverData,
+            ContentType: "image/jpeg",
+          })
+        );
+        const coverUrl = `/api/cover/${filename}`;
+
+        if (album) {
+          await queryD1(
+            `INSERT INTO albums (name, cover_url) VALUES (?, ?)
+             ON CONFLICT(name) DO UPDATE SET cover_url = excluded.cover_url`,
+            [album, coverUrl]
+          );
+          handledAlbums.add(album.toLowerCase());
+        } else {
+          await queryD1(`UPDATE tracks SET cover_url = ? WHERE id = ?`, [coverUrl, row.id]);
+        }
+        updated++;
+      } catch (e) {
+        console.warn("Backfill cover failed for track", row.id, e);
+        notFound++;
+      }
+    }
+
+    revalidatePath("/");
+    revalidatePath("/admin");
+    return { success: true, updated, notFound };
+  } catch (error: any) {
+    console.error("Backfill covers error:", error);
+    return { success: false, error: error.message || "Failed to backfill covers" };
   }
 }
 
