@@ -2,15 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import ZenifyGlyph from "@/components/ZenifyGlyph";
 
-export default function SidebarProfile({ 
-  isLoggedIn, 
-  name, 
-  email 
-}: { 
-  isLoggedIn: boolean; 
-  name?: string | null; 
+export default function SidebarProfile({
+  isLoggedIn,
+  name,
+  email
+}: {
+  isLoggedIn: boolean;
+  name?: string | null;
   email?: string | null;
 }) {
   const pathname = usePathname();
@@ -22,26 +21,18 @@ export default function SidebarProfile({
         isProfile ? "opacity-0 scale-90 h-0 mb-0 pointer-events-none" : "opacity-100 scale-100 h-[40px] mb-8"
       }`}
     >
-      <Link href="/profile" className="flex items-center gap-3 px-4 group h-full">
-        <div
-          className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 cursor-pointer transition-transform group-hover:scale-110"
-          style={{
-            background: "linear-gradient(135deg, var(--accent), #6366f1)",
-            boxShadow: "0 0 14px var(--accent-glow)",
-          }}
-        >
-          {isLoggedIn ? (
+      <Link href="/profile" className="flex items-center gap-3 px-4 h-full">
+        {isLoggedIn && (
+          <div
+            className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+            style={{
+              background: "linear-gradient(135deg, var(--accent), #6366f1)",
+              boxShadow: "0 0 14px var(--accent-glow)",
+            }}
+          >
             <span className="font-bold text-white text-sm">{name?.charAt(0) || "U"}</span>
-          ) : (
-            <ZenifyGlyph size={20} />
-          )}
-          {isLoggedIn && (
-            <span
-              className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full border-2"
-              style={{ background: "var(--accent)", borderColor: "var(--bg-primary)" }}
-            />
-          )}
-        </div>
+          </div>
+        )}
         <div className="flex flex-col min-w-0">
           <span className="font-bold text-sm truncate" style={{ color: "var(--text-primary)" }}>
             {isLoggedIn ? (name || "User") : "Zenify"}

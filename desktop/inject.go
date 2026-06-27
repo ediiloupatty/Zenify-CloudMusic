@@ -1,0 +1,75 @@
+package main
+
+// titlebarJS is injected into every page (before its own scripts, on each
+// navigation). It marks the desktop environment, forwards now-playing events to
+// Discord, and builds a custom 32px title bar with working window controls that
+// call the win* functions bound in main.go. All styling is inline so it works on
+// the unmodified online web app.
+const titlebarJS = `
+window.__ZENIFY_DESKTOP__ = true;
+
+window.addEventListener('zenify:nowplaying', function (e) {
+  try { window.zenifyPresence(e.detail); } catch (_) {}
+});
+
+(function () {
+  function call(n){ var f = window[n]; if (typeof f === 'function') f(); }
+
+  function mkbtn(svg, hover, fn){
+    var b = document.createElement('button');
+    b.style.cssText = 'height:100%;width:46px;display:flex;align-items:center;justify-content:center;background:transparent;border:0;color:inherit;cursor:default;transition:background .15s,color .15s;-webkit-app-region:no-drag';
+    b.innerHTML = svg;
+    b.onmousedown = function(e){ e.stopPropagation(); };
+    b.onmouseenter = function(){ b.style.background = hover; if (hover === '#dc2626') b.style.color = '#fff'; };
+    b.onmouseleave = function(){ b.style.background = 'transparent'; b.style.color = 'inherit'; };
+    b.onclick = fn;
+    return b;
+  }
+
+  function inject(){
+    if (!document.body || document.getElementById('zenify-titlebar')) return;
+
+    var style = document.createElement('style');
+    style.id = 'zenify-titlebar-style';
+    style.textContent = 'body{padding-top:32px !important}.h-screen{height:calc(100vh - 32px) !important}';
+    document.head.appendChild(style);
+
+    var bar = document.createElement('div');
+    bar.id = 'zenify-titlebar';
+    bar.style.cssText = 'position:fixed;top:0;left:0;right:0;height:32px;z-index:2147483647;display:flex;align-items:center;justify-content:space-between;background:#0a0c11;border-bottom:1px solid rgba(255,255,255,.08);color:#9aa3af;user-select:none;font-family:system-ui,Segoe UI,sans-serif';
+    bar.onmousedown = function(){ call('winDragStart'); };
+    bar.ondblclick = function(){ call('winToggleMaximize'); };
+
+    bar.innerHTML = '<div style="display:flex;align-items:center;gap:8px;padding:0 12px;height:100%;pointer-events:none">' +
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="#14b8a6">' +
+      '<rect x="2.5" y="8" width="2.6" height="8" rx="1.3"/>' +
+      '<rect x="6.6" y="5.5" width="2.6" height="13" rx="1.3"/>' +
+      '<rect x="10.7" y="3.5" width="2.6" height="17" rx="1.3"/>' +
+      '<rect x="14.8" y="6.5" width="2.6" height="11" rx="1.3"/>' +
+      '<rect x="18.9" y="8.5" width="2.6" height="7" rx="1.3"/></svg>' +
+      '<span style="font-size:12px;font-weight:600;letter-spacing:.04em">Zenify</span></div>';
+
+    var ctr = document.createElement('div');
+    ctr.style.cssText = 'display:flex;align-items:center;height:100%';
+
+    var minSvg = '<svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.2"><line x1="1" y1="6" x2="10" y2="6"/></svg>';
+    var maxSvg = '<svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1.2" y="1.2" width="8.6" height="8.6" rx="1"/></svg>';
+    var clsSvg = '<svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.2"><line x1="1.5" y1="1.5" x2="9.5" y2="9.5"/><line x1="9.5" y1="1.5" x2="1.5" y2="9.5"/></svg>';
+
+    ctr.appendChild(mkbtn(minSvg, 'rgba(255,255,255,.1)', function(){ call('winMinimize'); }));
+    ctr.appendChild(mkbtn(maxSvg, 'rgba(255,255,255,.1)', function(){ call('winToggleMaximize'); }));
+    ctr.appendChild(mkbtn(clsSvg, '#dc2626', function(){ call('winClose'); }));
+
+    bar.appendChild(ctr);
+    document.body.appendChild(bar);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', inject);
+  } else {
+    inject();
+  }
+  // Safety net in case a client-side route change wipes the node.
+  setInterval(inject, 1000);
+})();
+`
