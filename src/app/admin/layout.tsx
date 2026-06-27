@@ -38,6 +38,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             ? "This account doesn't have admin access. Only the site owner can open the admin panel."
             : "You need to sign in with the owner account to access the admin panel."}
         </p>
+        {loggedIn && email && (
+          <p className="text-xs font-mono mt-1" style={{ color: "var(--text-muted)" }}>
+            Signed in as: <span style={{ color: "var(--text-primary)" }}>{email}</span>
+          </p>
+        )}
       </div>
       <div className="flex items-center gap-3">
         <Link
