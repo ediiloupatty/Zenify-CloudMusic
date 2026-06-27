@@ -144,7 +144,13 @@ export default function BottomPlayer() {
   } = usePlayer();
 
   const [isExpanded, setIsExpanded] = useState(false);
-  const [volume, setVolume] = useState(0.8);
+  // Volume persists across reloads/sessions. Lazy initialiser reads the saved
+  // level (guarded for SSR where localStorage is unavailable).
+  const [volume, setVolume] = useState<number>(() => {
+    if (typeof window === "undefined") return 0.8;
+    const saved = parseFloat(window.localStorage.getItem("player_volume") || "");
+    return Number.isFinite(saved) ? Math.min(1, Math.max(0, saved)) : 0.8;
+  });
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [activeTab, setActiveTab] = useState<"player" | "lyrics">("player");
@@ -514,17 +520,28 @@ export default function BottomPlayer() {
     }
   }, [currentTrackIndex, isPlaying, tracks]);
 
-  const prevVolumeRef = useRef(0.8); // remembers the level to restore after mute
+  // remembers the level to restore after mute (seeded with the persisted volume)
+  const prevVolumeRef = useRef(volume || 0.8);
 
   const applyVolume = (v: number) => {
     const clamped = Math.min(1, Math.max(0, v));
     setVolume(clamped);
+    // Persist so the chosen level survives a page reload / next session.
+    if (typeof window !== "undefined") window.localStorage.setItem("player_volume", String(clamped));
     // Once the audio graph is up, volume is the gain node (the element stays at
     // full level so the analyser/visualizer sees the real signal). Before that,
     // fall back to the element's own volume.
     if (gainNodeRef.current) gainNodeRef.current.gain.value = clamped;
     else if (audioRef.current) audioRef.current.volume = clamped;
   };
+
+  // Apply the persisted volume to the bare <audio> element on mount, before the
+  // audio graph (gain node) is built, so the first playback starts at the saved
+  // level rather than the browser's default of full volume.
+  useEffect(() => {
+    if (!gainNodeRef.current && audioRef.current) audioRef.current.volume = volume;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.stopPropagation();
