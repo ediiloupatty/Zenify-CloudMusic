@@ -4,6 +4,7 @@ import { useTheme } from "@/context/ThemeContext";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getCurrentUserAction, signOutAction } from "@/app/actions/settings";
+import { useAudioCache, formatBytes } from "@/lib/useAudioCache";
 
 type UserInfo = {
   name: string;
@@ -17,6 +18,8 @@ export default function SettingsPage() {
   const [user, setUser] = useState<UserInfo>(null);
   const [loading, setLoading] = useState(true);
   const [signingOut, setSigningOut] = useState(false);
+  const { isOnline, stats, swReady, refreshStats, clearCache } = useAudioCache();
+  const [clearing, setClearing] = useState(false);
 
   useEffect(() => {
     getCurrentUserAction().then((u) => {
@@ -299,6 +302,123 @@ export default function SettingsPage() {
                 />
               </button>
             </div>
+          </div>
+        </section>
+
+        {/* ── Storage & Cache Section ── */}
+        <section>
+          <h2
+            className="text-xs font-black tracking-[0.25em] uppercase mb-3"
+            style={{ color: "var(--text-muted)" }}
+          >
+            Storage & Offline
+          </h2>
+          <div
+            className="rounded-2xl overflow-hidden"
+            style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-card)" }}
+          >
+            {/* Online/Offline Status */}
+            <div className="flex items-center justify-between px-4 py-4">
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-9 h-9 rounded-xl flex items-center justify-center"
+                  style={{ background: "var(--bg-card)", color: "var(--text-secondary)" }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    {isOnline ? (
+                      <path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z" />
+                    ) : (
+                      <path d="M22.99 9C19.15 5.16 13.8 3.76 8.84 4.78l2.52 2.52c3.47-.17 6.99 1.05 9.63 3.7l2-2zM18.99 13c-1.29-1.29-2.84-2.13-4.49-2.56l3.53 3.53.96-.97zM2 3.05L5.07 6.1C3.6 6.82 2.22 7.78 1 9l2 2c1.02-1.02 2.17-1.82 3.38-2.42l2.52 2.52C7.61 11.7 6.44 12.51 5.45 13l2 2c1.13-.93 2.4-1.63 3.78-2.08l2.74 2.74c-1.18.16-2.33.57-3.38 1.25L12 18.17l1.41 1.41 1.41-1.41c.81-.81 1.86-1.19 2.91-1.28l4.46 4.46 1.42-1.41L3.41 1.64 2 3.05z" />
+                    )}
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>
+                    Connection Status
+                  </p>
+                  <p className="text-xs" style={{ color: isOnline ? "#10b981" : "#ef4444" }}>
+                    {isOnline ? "Online" : "Offline — playing cached songs"}
+                  </p>
+                </div>
+              </div>
+              <div
+                className="w-2.5 h-2.5 rounded-full"
+                style={{ background: isOnline ? "#10b981" : "#ef4444" }}
+              />
+            </div>
+
+            <div style={{ height: "1px", background: "var(--border-subtle)", margin: "0 1rem" }} />
+
+            {/* Cached Songs Info */}
+            <div className="flex items-center justify-between px-4 py-4">
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-9 h-9 rounded-xl flex items-center justify-center"
+                  style={{ background: "var(--bg-card)", color: "var(--text-secondary)" }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>
+                    Cached Songs
+                  </p>
+                  <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                    {swReady && stats
+                      ? `${stats.trackCount} songs · ${formatBytes(stats.totalSize)}`
+                      : swReady
+                        ? "No cached songs yet"
+                        : "Service Worker loading..."}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  refreshStats();
+                }}
+                className="text-xs font-semibold px-3 py-1.5 rounded-full transition-colors"
+                style={{ background: "var(--bg-card)", color: "var(--text-secondary)" }}
+              >
+                Refresh
+              </button>
+            </div>
+
+            <div style={{ height: "1px", background: "var(--border-subtle)", margin: "0 1rem" }} />
+
+            {/* Clear Cache */}
+            <button
+              onClick={async () => {
+                setClearing(true);
+                clearCache();
+                setTimeout(() => {
+                  refreshStats();
+                  setClearing(false);
+                }, 500);
+              }}
+              disabled={clearing || !swReady || (stats?.trackCount === 0)}
+              className="w-full flex items-center justify-between px-4 py-4 transition-all active:scale-[0.99] text-left disabled:opacity-40"
+              style={{ color: "#ef4444" }}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-9 h-9 rounded-xl flex items-center justify-center"
+                  style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444" }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-semibold text-sm">
+                    {clearing ? "Clearing..." : "Clear Audio Cache"}
+                  </p>
+                  <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                    Remove all cached songs to free storage
+                  </p>
+                </div>
+              </div>
+            </button>
           </div>
         </section>
 

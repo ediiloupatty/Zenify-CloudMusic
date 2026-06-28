@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import { ToastProvider } from "@/context/ToastContext";
 import BottomPlayer from "@/components/BottomPlayer";
 import BottomNav from "@/components/BottomNav";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,6 +37,7 @@ export default function RootLayout({
         <ThemeProvider>
           <ToastProvider>
             <PlayerProvider>
+              <ServiceWorkerRegister />
               {children}
               <BottomPlayer />
               <BottomNav />
