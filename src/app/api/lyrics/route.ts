@@ -26,10 +26,14 @@ export async function GET(request: Request) {
     const syncedResult = data.find((item: any) => item.syncedLyrics && item.syncedLyrics.length > 0);
 
     if (syncedResult) {
-      return NextResponse.json({ syncedLyrics: syncedResult.syncedLyrics });
+      return NextResponse.json({ syncedLyrics: syncedResult.syncedLyrics }, {
+        headers: { "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800" },
+      });
     }
 
-    return NextResponse.json({ syncedLyrics: null });
+    return NextResponse.json({ syncedLyrics: null }, {
+      headers: { "Cache-Control": "public, max-age=3600" },
+    });
   } catch (error) {
     console.error("Error fetching lyrics:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

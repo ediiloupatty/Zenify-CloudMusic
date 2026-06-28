@@ -540,9 +540,11 @@ export async function getUserStats(
 ): Promise<{ joinedAt: string | null; totalPlays: number }> {
   if (USE_MOCK) return { joinedAt: null, totalPlays: 0 };
   try {
-    const userRows = await queryD1("SELECT created_at FROM users WHERE email = ?", [email]);
+    const [userRows, playRows] = await Promise.all([
+      queryD1("SELECT created_at FROM users WHERE email = ?", [email]),
+      queryD1("SELECT COALESCE(SUM(play_count), 0) AS total FROM tracks"),
+    ]);
     const joinedAt = userRows.length > 0 ? ((userRows[0] as any).created_at ?? null) : null;
-    const playRows = await queryD1("SELECT COALESCE(SUM(play_count), 0) AS total FROM tracks");
     const totalPlays = Number((playRows[0] as any)?.total) || 0;
     return { joinedAt, totalPlays };
   } catch (error) {

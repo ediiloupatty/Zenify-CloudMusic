@@ -22,7 +22,10 @@ export async function GET(
   try {
     const command = new GetObjectCommand({ Bucket: bucketName, Key: key });
     const url = await getSignedUrl(r2Client, command, { expiresIn: 3600 });
-    return NextResponse.redirect(url, { status: 302 });
+    return NextResponse.redirect(url, {
+      status: 302,
+      headers: { "Cache-Control": "private, max-age=3000" },
+    });
   } catch (error) {
     console.error("Error generating presigned URL:", error);
     return new NextResponse("Internal Server Error", { status: 500 });
