@@ -1,27 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { hashString, PALETTES } from "@/lib/utils";
 
 type Artist = {
   name: string;
   image_url?: string;
-  trackCount: number;
 };
-
-const PALETTES: [string, string][] = [
-  ["#6366f1", "#8b5cf6"],
-  ["#14b8a6", "#06b6d4"],
-  ["#f43f5e", "#ec4899"],
-  ["#f59e0b", "#f97316"],
-  ["#10b981", "#059669"],
-  ["#3b82f6", "#6366f1"],
-];
-
-function hashStr(s: string) {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
-  return Math.abs(h);
-}
 
 export default function ArtistGrid({
   heading,
@@ -56,7 +41,7 @@ export default function ArtistGrid({
 
       <div className={wrap ? "flex flex-wrap gap-5" : "flex overflow-x-auto gap-5 pb-4 snap-x snap-mandatory"}>
         {shown.map((artist) => {
-          const [c1, c2] = PALETTES[hashStr(artist.name) % PALETTES.length];
+          const [c1, c2] = PALETTES[hashString(artist.name) % PALETTES.length];
           return (
             <Link
               key={artist.name}

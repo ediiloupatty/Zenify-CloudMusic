@@ -4,32 +4,15 @@ import Link from "next/link";
 import { Track } from "@/lib/cloudflare";
 import { usePlayer } from "@/context/PlayerContext";
 import { cleanTitle } from "@/lib/cleanTitle";
-
-const PALETTES: [string, string][] = [
-  ["#6366f1", "#8b5cf6"],
-  ["#14b8a6", "#06b6d4"],
-  ["#f43f5e", "#ec4899"],
-  ["#f59e0b", "#f97316"],
-  ["#10b981", "#059669"],
-  ["#3b82f6", "#6366f1"],
-];
-const ICONS = [
-  "M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z",
-  "M10 20h4V4h-4v16zm-6 0h4v-8H4v8zM16 9v11h4V9h-4z",
-];
-function hashStr(s: string) {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
-  return Math.abs(h);
-}
+import { hashString, PALETTES, MUSIC_ICON_PATHS } from "@/lib/utils";
 
 function Cover({ track, rounded }: { track: Track; rounded: string }) {
   if (track.cover_url) {
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={track.cover_url} alt={track.title} loading="lazy" decoding="async" className={`w-full h-full object-cover ${rounded}`} />;
   }
-  const [c1, c2] = PALETTES[hashStr(track.title + track.category) % PALETTES.length];
-  const icon = ICONS[hashStr(track.title) % ICONS.length];
+  const [c1, c2] = PALETTES[hashString(track.title + track.category) % PALETTES.length];
+  const icon = MUSIC_ICON_PATHS[hashString(track.title) % MUSIC_ICON_PATHS.length];
   return (
     <div className={`w-full h-full flex items-center justify-center ${rounded}`} style={{ background: `linear-gradient(135deg, ${c1}, ${c2})` }}>
       <svg width="40%" height="40%" viewBox="0 0 24 24" fill="white" className="opacity-90 drop-shadow">

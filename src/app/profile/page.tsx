@@ -4,23 +4,9 @@ import Sidebar from "@/components/Sidebar";
 import { getUserFavorites, getUserStats, getTracksByCategory, getRecentlyPlayed, getPlaylists } from "@/lib/cloudflare";
 import CompactTrackList from "@/components/CompactTrackList";
 import PlaylistGrid from "@/components/PlaylistGrid";
+import { hashString, PALETTES } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
-
-function hashStr(s: string) {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
-  return Math.abs(h);
-}
-
-const PALETTES: [string, string][] = [
-  ["#f43f5e", "#ec4899"],
-  ["#10b981", "#059669"],
-  ["#3b82f6", "#6366f1"],
-  ["#f59e0b", "#f97316"],
-  ["#8b5cf6", "#d946ef"],
-  ["#14b8a6", "#06b6d4"],
-];
 
 export default async function ProfilePage() {
   const session = await auth();
@@ -87,7 +73,7 @@ export default async function ProfilePage() {
   const allPlaylists = await getPlaylists();
   const userPlaylists = allPlaylists.filter((p) => p.user_email === userEmail);
 
-  const [c1, c2] = PALETTES[hashStr(userEmail || userName) % PALETTES.length];
+  const [c1, c2] = PALETTES[hashString(userEmail || userName) % PALETTES.length];
 
   return (
     <div

@@ -3,22 +3,9 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { Album } from "@/lib/cloudflare";
+import { hashString, PALETTES } from "@/lib/utils";
 
 type AlbumWithYear = Album & { year?: number };
-
-const GRADIENTS: [string, string][] = [
-  ["#14b8a6", "#06b6d4"],
-  ["#6366f1", "#8b5cf6"],
-  ["#f43f5e", "#ec4899"],
-  ["#f59e0b", "#f97316"],
-  ["#10b981", "#059669"],
-  ["#3b82f6", "#6366f1"],
-];
-function hashStr(s: string) {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
-  return Math.abs(h);
-}
 
 interface Props {
   albums: AlbumWithYear[];
@@ -51,7 +38,7 @@ export default function ArtistAlbums({ albums, selectedName, onSelect }: Props) 
           play button opens the album playlist. No hover-grow / side glow. */}
       <div className="flex gap-4 overflow-x-auto pb-4" style={{ scrollbarWidth: "none" }}>
         {albums.map((al) => {
-          const [a1, a2] = GRADIENTS[hashStr(al.name) % GRADIENTS.length];
+          const [a1, a2] = PALETTES[hashString(al.name) % PALETTES.length];
           const isSelected = selectedName === al.name;
           const meta = [al.year, `${al.trackCount} track${al.trackCount !== 1 ? "s" : ""}`]
             .filter(Boolean)

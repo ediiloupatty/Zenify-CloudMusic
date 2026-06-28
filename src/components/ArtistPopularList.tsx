@@ -6,13 +6,7 @@ import { Track } from "@/lib/cloudflare";
 import { usePlayer } from "@/context/PlayerContext";
 import { cleanTitle } from "@/lib/cleanTitle";
 import { toggleFavoriteAction } from "@/app/actions/favorites";
-
-function formatDuration(secs?: number): string {
-  if (!secs || !Number.isFinite(secs) || secs <= 0) return "";
-  const m = Math.floor(secs / 60);
-  const s = Math.floor(secs % 60);
-  return `${m}:${s < 10 ? "0" : ""}${s}`;
-}
+import { hashString, formatDuration, PALETTES } from "@/lib/utils";
 
 function Equalizer({ playing }: { playing: boolean }) {
   return (
@@ -58,20 +52,6 @@ function Heart({ trackId, initial, isLoggedIn }: { trackId: string; initial: boo
   );
 }
 
-const GRADIENTS: [string, string][] = [
-  ["#14b8a6", "#06b6d4"],
-  ["#6366f1", "#8b5cf6"],
-  ["#f43f5e", "#ec4899"],
-  ["#f59e0b", "#f97316"],
-  ["#10b981", "#059669"],
-  ["#3b82f6", "#6366f1"],
-];
-function hashStr(s: string) {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
-  return Math.abs(h);
-}
-
 export default function ArtistPopularList({
   tracks,
   userFavorites,
@@ -102,7 +82,7 @@ export default function ArtistPopularList({
         {tracks.map((track, i) => {
           const isCurrent = currentId === track.id;
           const dur = formatDuration(track.duration);
-          const [c1, c2] = GRADIENTS[hashStr(track.title + track.category) % GRADIENTS.length];
+          const [c1, c2] = PALETTES[hashString(track.title + track.category) % PALETTES.length];
 
           return (
             <div

@@ -9,22 +9,9 @@ import {
 import ArtistView from "@/components/ArtistView";
 import Sidebar from "@/components/Sidebar";
 import DynamicBackground from "@/components/DynamicBackground";
+import { hashString, PALETTES } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
-
-const GRADIENTS: [string, string][] = [
-  ["#14b8a6", "#06b6d4"],
-  ["#6366f1", "#8b5cf6"],
-  ["#f43f5e", "#ec4899"],
-  ["#f59e0b", "#f97316"],
-  ["#10b981", "#059669"],
-  ["#3b82f6", "#6366f1"],
-];
-function hashStr(s: string) {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
-  return Math.abs(h);
-}
 
 export default async function ArtistPage({
   params,
@@ -54,7 +41,7 @@ export default async function ArtistPage({
     tracks.map((t) => t.album).filter((a): a is string => !!a && a.trim() !== "")
   );
   const albums = allAlbums.filter((a) => artistAlbumNames.has(a.name));
-  const [c1, c2] = GRADIENTS[hashStr(name) % GRADIENTS.length];
+  const [c1, c2] = PALETTES[hashString(name) % PALETTES.length];
 
   if (!info && tracks.length === 0) {
     return (

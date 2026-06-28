@@ -2,20 +2,7 @@
 
 import Link from "next/link";
 import { Playlist } from "@/lib/cloudflare";
-
-const PALETTES: [string, string][] = [
-  ["#059669", "#064e3b"], // Green
-  ["#6366f1", "#312e81"], // Indigo/Purple
-  ["#f97316", "#7c2d12"], // Orange
-  ["#f43f5e", "#881337"], // Rose
-  ["#14b8a6", "#134e4a"], // Teal
-];
-
-function hashStr(s: string) {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
-  return Math.abs(h);
-}
+import { hashString, PALETTES } from "@/lib/utils";
 
 export default function PlaylistGrid({
   heading,
@@ -50,10 +37,10 @@ export default function PlaylistGrid({
 
       <div className={wrap ? "flex flex-wrap gap-5 items-stretch" : "flex overflow-x-auto gap-5 pb-4 snap-x snap-mandatory items-stretch"}>
         {shown.map((playlist) => {
-          const [c1, c2] = PALETTES[hashStr(playlist.id) % PALETTES.length];
+          const [c1, c2] = PALETTES[hashString(playlist.id) % PALETTES.length];
           // Mock some tracks count and privacy for visual fidelity to reference
-          const tracksCount = (hashStr(playlist.name) % 30) + 10;
-          const isPrivate = hashStr(playlist.name) % 2 === 0;
+          const tracksCount = (hashString(playlist.name) % 30) + 10;
+          const isPrivate = hashString(playlist.name) % 2 === 0;
 
           return (
             <Link

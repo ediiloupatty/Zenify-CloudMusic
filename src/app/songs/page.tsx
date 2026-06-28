@@ -3,14 +3,16 @@ import MainTracksContainer from "@/components/MainTracksContainer";
 import { getTracksByCategory, getUserFavorites } from "@/lib/cloudflare";
 import { auth } from "@/auth";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 30;
 
 export default async function SongsPage() {
   const session = await auth();
   const isLoggedIn = !!session?.user;
-  const userFavorites =
-    isLoggedIn && session.user?.email ? await getUserFavorites(session.user.email) : [];
-  const tracks = await getTracksByCategory(null);
+
+  const [userFavorites, tracks] = await Promise.all([
+    isLoggedIn && session.user?.email ? getUserFavorites(session.user.email) : Promise.resolve([]),
+    getTracksByCategory(null),
+  ]);
 
   return (
     <BrowseShell>

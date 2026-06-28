@@ -4,28 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
 import { createPlaylistAction, deletePlaylistAction } from "@/app/actions/playlists";
+import { hashString, PALETTES } from "@/lib/utils";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
-const GRADIENT_PAIRS: [string, string][] = [
-  ["#6366f1", "#8b5cf6"],
-  ["#14b8a6", "#06b6d4"],
-  ["#f43f5e", "#ec4899"],
-  ["#f59e0b", "#f97316"],
-  ["#10b981", "#059669"],
-  ["#3b82f6", "#6366f1"],
-  ["#a855f7", "#ec4899"],
-  ["#06b6d4", "#3b82f6"],
-];
-
-function hashStr(s: string) {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
-  return Math.abs(h);
-}
-
 function gradientFor(name: string): [string, string] {
-  return GRADIENT_PAIRS[hashStr(name) % GRADIENT_PAIRS.length];
+  return PALETTES[hashString(name) % PALETTES.length];
 }
 
 type Playlist = { id: string; name: string; trackCount?: number };

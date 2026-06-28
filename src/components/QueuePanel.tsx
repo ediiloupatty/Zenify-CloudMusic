@@ -2,7 +2,9 @@
 
 import { usePlayer } from "@/context/PlayerContext";
 import { cleanTitle } from "@/lib/cleanTitle";
+import { formatDuration } from "@/lib/utils";
 import type { Track } from "@/lib/cloudflare";
+import { formatAudioSpecs } from "@/lib/formatSpecs";
 
 function MiniCover({ track }: { track: Track }) {
   if (track.cover_url) {
@@ -18,6 +20,82 @@ function MiniCover({ track }: { track: Track }) {
   );
 }
 
+function HiResDetail({ track }: { track: Track }) {
+  const specs = formatAudioSpecs(track);
+  if (!specs) return null;
+
+  const isHiRes = (track.bit_depth && track.bit_depth >= 24) ||
+    (track.sample_rate && track.sample_rate > 44100);
+
+  return (
+    <div
+      className="mx-3 mb-3 rounded-xl p-3"
+      style={{ background: "var(--bg-card)", border: "1px solid var(--border-card)" }}
+    >
+      <div className="flex items-center gap-2 mb-2.5">
+        <div
+          className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+          style={{ background: isHiRes ? "linear-gradient(135deg, #14b8a6, #6366f1)" : "var(--bg-card-hover)" }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
+            <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+          </svg>
+        </div>
+        <span className="text-[10px] font-black tracking-[0.15em] uppercase" style={{ color: "var(--text-muted)" }}>
+          Audio Quality
+        </span>
+        {isHiRes && (
+          <span className="ml-auto px-2 py-0.5 rounded text-[9px] font-black tracking-wider text-white bg-gradient-to-r from-teal-400 to-indigo-500">
+            HI-RES
+          </span>
+        )}
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        {track.bit_depth && (
+          <div className="rounded-lg px-2.5 py-2" style={{ background: "var(--bg-card-hover)" }}>
+            <p className="text-[9px] font-bold uppercase tracking-wider mb-0.5" style={{ color: "var(--text-muted)" }}>
+              Bit Depth
+            </p>
+            <p className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>
+              {track.bit_depth}-bit
+            </p>
+          </div>
+        )}
+        {track.sample_rate && (
+          <div className="rounded-lg px-2.5 py-2" style={{ background: "var(--bg-card-hover)" }}>
+            <p className="text-[9px] font-bold uppercase tracking-wider mb-0.5" style={{ color: "var(--text-muted)" }}>
+              Sample Rate
+            </p>
+            <p className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>
+              {(track.sample_rate / 1000).toFixed(track.sample_rate % 1000 === 0 ? 0 : 1)} kHz
+            </p>
+          </div>
+        )}
+        {track.file_url && (
+          <div className="rounded-lg px-2.5 py-2" style={{ background: "var(--bg-card-hover)" }}>
+            <p className="text-[9px] font-bold uppercase tracking-wider mb-0.5" style={{ color: "var(--text-muted)" }}>
+              Format
+            </p>
+            <p className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>
+              {track.file_url.includes(".flac") ? "FLAC" : track.file_url.includes(".wav") ? "WAV" : track.file_url.includes(".mp3") ? "MP3" : "Audio"}
+            </p>
+          </div>
+        )}
+        {track.duration && (
+          <div className="rounded-lg px-2.5 py-2" style={{ background: "var(--bg-card-hover)" }}>
+            <p className="text-[9px] font-bold uppercase tracking-wider mb-0.5" style={{ color: "var(--text-muted)" }}>
+              Duration
+            </p>
+            <p className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>
+              {formatDuration(track.duration)}
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // Slide-in "Up Next" drawer. Reads the upcoming queue from the player and lets
 // the user jump straight to any track (respects shuffle order).
 export default function QueuePanel({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -29,15 +107,19 @@ export default function QueuePanel({ open, onClose }: { open: boolean; onClose: 
   return (
     <>
       {/* Click-away backdrop */}
-      <div className="fixed inset-0 z-[150]" onClick={onClose} />
+      <div className="fixed inset-0 z-[150] bg-black/30" onClick={onClose} />
 
       <aside
         role="dialog"
         aria-label="Play queue"
-        className="fixed right-0 top-0 bottom-0 w-[340px] max-w-[85vw] z-[160] flex flex-col fade-in shadow-2xl"
+        className="fixed right-0 top-0 bottom-0 w-[360px] max-w-[88vw] z-[160] flex flex-col fade-in shadow-2xl"
         style={{ background: "var(--bg-secondary)", borderLeft: "1px solid var(--border-card)" }}
       >
-        <header className="flex items-center justify-between px-5 py-4 border-b flex-shrink-0" style={{ borderColor: "var(--border-subtle)" }}>
+        {/* ─── Sticky Header ─── */}
+        <header
+          className="flex items-center justify-between px-5 py-4 border-b flex-shrink-0 sticky top-0 z-10"
+          style={{ borderColor: "var(--border-subtle)", background: "var(--bg-secondary)" }}
+        >
           <h2 className="text-base font-black" style={{ color: "var(--text-primary)" }}>
             Queue
           </h2>
@@ -53,58 +135,108 @@ export default function QueuePanel({ open, onClose }: { open: boolean; onClose: 
           </button>
         </header>
 
-        <div className="flex-1 overflow-y-auto px-3 py-3">
+        {/* ─── Scrollable Content ─── */}
+        <div className="flex-1 overflow-y-auto min-h-0">
           {current && (
-            <>
+            <div className="px-3 pt-3">
               <p className="px-2 mb-2 text-[10px] font-bold tracking-[0.15em] uppercase" style={{ color: "var(--text-muted)" }}>
                 Now playing
               </p>
-              <div className="flex items-center gap-3 p-2 rounded-xl mb-4" style={{ background: "var(--accent-glow)" }}>
-                <div className="w-11 h-11 rounded-md overflow-hidden flex-shrink-0">
+              <div className="flex items-center gap-3 p-2.5 rounded-xl mb-2" style={{ background: "var(--accent-glow)" }}>
+                <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 shadow-md">
                   <MiniCover track={current} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-sm truncate" style={{ color: "var(--accent)" }}>
+                  <p className="font-bold text-sm truncate" style={{ color: "var(--accent)" }}>
                     {cleanTitle(current.title)}
                   </p>
                   <p className="text-xs truncate" style={{ color: "var(--text-muted)" }}>
                     {current.artist || current.category}
                   </p>
+                  {current.duration && (
+                    <p className="text-[10px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+                      {formatDuration(current.duration)}
+                    </p>
+                  )}
+                </div>
+                {/* Equalizer animation */}
+                <div className="flex items-end gap-[2px] h-4 flex-shrink-0 pr-1">
+                  <span className="eq-bar" style={{ animationDelay: "0s" }} />
+                  <span className="eq-bar" style={{ animationDelay: "0.2s" }} />
+                  <span className="eq-bar" style={{ animationDelay: "0.4s" }} />
                 </div>
               </div>
-            </>
-          )}
-
-          <p className="px-2 mb-2 text-[10px] font-bold tracking-[0.15em] uppercase" style={{ color: "var(--text-muted)" }}>
-            Up next
-          </p>
-          {upcoming.length === 0 ? (
-            <p className="px-2 py-4 text-sm" style={{ color: "var(--text-muted)" }}>
-              Nothing queued — this is the last track.
-            </p>
-          ) : (
-            <div className="flex flex-col gap-1">
-              {upcoming.map((u, i) => (
-                <button
-                  key={`${u.index}-${i}`}
-                  onClick={() => setCurrentTrackIndex(u.index)}
-                  className="group flex items-center gap-3 p-2 rounded-xl text-left transition-colors hover:bg-[var(--bg-card-hover)]"
-                >
-                  <div className="w-11 h-11 rounded-md overflow-hidden flex-shrink-0">
-                    <MiniCover track={u.track} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-sm truncate" style={{ color: "var(--text-primary)" }}>
-                      {cleanTitle(u.track.title)}
-                    </p>
-                    <p className="text-xs truncate" style={{ color: "var(--text-muted)" }}>
-                      {u.track.artist || u.track.category}
-                    </p>
-                  </div>
-                </button>
-              ))}
             </div>
           )}
+
+          {/* Hi-Res Detail */}
+          {current && <HiResDetail track={current} />}
+
+          {/* ─── Up Next ─── */}
+          <div className="px-3 pb-32">
+            <div className="flex items-center justify-between px-2 mb-2 mt-1">
+              <p className="text-[10px] font-bold tracking-[0.15em] uppercase" style={{ color: "var(--text-muted)" }}>
+                Up next
+              </p>
+              {upcoming.length > 0 && (
+                <span className="text-[10px] font-semibold" style={{ color: "var(--text-muted)" }}>
+                  {upcoming.length} track{upcoming.length !== 1 ? "s" : ""}
+                </span>
+              )}
+            </div>
+            {upcoming.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8 gap-2 text-center">
+                <div
+                  className="w-12 h-12 rounded-xl flex items-center justify-center mb-1"
+                  style={{ background: "var(--bg-card)" }}
+                >
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style={{ color: "var(--text-muted)" }}>
+                    <path d="M3 18h13v-2H3v2zm0-5h10v-2H3v2zm0-7v2h13V6H3zm18 9.59L17.42 12 21 8.41 19.59 7l-5 5 5 5L21 15.59z" />
+                  </svg>
+                </div>
+                <p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
+                  No more tracks
+                </p>
+                <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                  This is the last track in the queue.
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-0.5">
+                {upcoming.map((u, i) => (
+                  <button
+                    key={`${u.index}-${i}`}
+                    onClick={() => setCurrentTrackIndex(u.index)}
+                    className="group flex items-center gap-3 p-2 rounded-xl text-left transition-colors hover:bg-[var(--bg-card-hover)]"
+                  >
+                    {/* Track number */}
+                    <span
+                      className="w-5 text-center text-[11px] font-semibold flex-shrink-0 tabular-nums"
+                      style={{ color: "var(--text-muted)" }}
+                    >
+                      {i + 1}
+                    </span>
+                    <div className="w-10 h-10 rounded-md overflow-hidden flex-shrink-0">
+                      <MiniCover track={u.track} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-sm truncate group-hover:text-[var(--accent)] transition-colors" style={{ color: "var(--text-primary)" }}>
+                        {cleanTitle(u.track.title)}
+                      </p>
+                      <p className="text-xs truncate" style={{ color: "var(--text-muted)" }}>
+                        {u.track.artist || u.track.category}
+                      </p>
+                    </div>
+                    {u.track.duration && (
+                      <span className="text-[10px] font-medium flex-shrink-0 tabular-nums" style={{ color: "var(--text-muted)" }}>
+                        {formatDuration(u.track.duration)}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </aside>
     </>

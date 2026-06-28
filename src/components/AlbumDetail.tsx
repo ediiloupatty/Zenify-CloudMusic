@@ -6,13 +6,7 @@ import { Track } from "@/lib/cloudflare";
 import { usePlayer } from "@/context/PlayerContext";
 import { cleanTitle } from "@/lib/cleanTitle";
 import { toggleFavoriteAction } from "@/app/actions/favorites";
-
-function formatDuration(secs?: number): string {
-  if (!secs || !Number.isFinite(secs) || secs <= 0) return "--:--";
-  const m = Math.floor(secs / 60);
-  const s = Math.floor(secs % 60);
-  return `${m}:${s < 10 ? "0" : ""}${s}`;
-}
+import { hashString, formatDuration, PALETTES } from "@/lib/utils";
 
 function formatPlays(n?: number): string {
   if (!n || n <= 0) return "0";
@@ -31,20 +25,6 @@ function downloadTrack(t: Track) {
   document.body.appendChild(a);
   a.click();
   a.remove();
-}
-
-const PALETTES: [string, string][] = [
-  ["#6366f1", "#8b5cf6"],
-  ["#14b8a6", "#06b6d4"],
-  ["#f43f5e", "#ec4899"],
-  ["#f59e0b", "#f97316"],
-  ["#10b981", "#059669"],
-  ["#3b82f6", "#6366f1"],
-];
-function hashStr(s: string) {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
-  return Math.abs(h);
 }
 
 function Heart({ trackId, initial, isLoggedIn }: { trackId: string; initial: boolean; isLoggedIn: boolean }) {
@@ -116,7 +96,7 @@ export default function AlbumDetail({
   const hrs = Math.floor(mins / 60);
   const durStr = hrs > 0 ? `${hrs} hr ${mins % 60} min` : `${mins} min ${secs} sec`;
 
-  const [c1, c2] = PALETTES[hashStr(name) % PALETTES.length];
+  const [c1, c2] = PALETTES[hashString(name) % PALETTES.length];
 
   const handlePlayAll = () => {
     if (isThisAlbum) return setIsPlaying(!isPlaying);

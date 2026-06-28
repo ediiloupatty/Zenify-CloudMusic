@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { auth } from "@/auth";
 import BrowseShell from "@/components/BrowseShell";
-import { getUserFavorites, getTracksByCategory, Track } from "@/lib/cloudflare";
+import { getUserFavorites, getFavoriteTracks, Track } from "@/lib/cloudflare";
 import MainTracksContainer from "@/components/MainTracksContainer";
 
 export const dynamic = "force-dynamic";
@@ -46,12 +46,10 @@ export default async function FavoritesPage() {
     );
   }
 
-  const userFavorites = session.user?.email
-    ? await getUserFavorites(session.user.email)
-    : [];
-
-  const allTracks: Track[] = await getTracksByCategory(null);
-  const favoriteTracks = allTracks.filter((t) => userFavorites.includes(t.id));
+  const [userFavorites, favoriteTracks] = await Promise.all([
+    session.user?.email ? getUserFavorites(session.user.email) : Promise.resolve([]),
+    session.user?.email ? getFavoriteTracks(session.user.email) : Promise.resolve([]),
+  ]);
 
   return (
     <BrowseShell>

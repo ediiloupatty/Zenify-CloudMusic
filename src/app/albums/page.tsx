@@ -1,7 +1,7 @@
 import BrowseShell from "@/components/BrowseShell";
 import AlbumSection from "@/components/AlbumSection";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 30;
 
 export default function AlbumsPage() {
   return (

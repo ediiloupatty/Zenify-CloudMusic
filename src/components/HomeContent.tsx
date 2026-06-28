@@ -12,6 +12,7 @@ import AlbumSection from "@/components/AlbumSection";
 import ArtistGrid from "@/components/ArtistGrid";
 import PlaylistGrid from "@/components/PlaylistGrid";
 import HeartButton from "@/components/HeartButton";
+import { hashString, formatDuration, PALETTES } from "@/lib/utils";
 
 type HomeContentProps = {
   tracks: Track[];
@@ -26,25 +27,12 @@ type HomeContentProps = {
 };
 
 // ─── Cover art fallback (shared gradient logic) ──────────────────────────────
-const PALETTES: [string, string][] = [
-  ["#6366f1", "#8b5cf6"],
-  ["#14b8a6", "#06b6d4"],
-  ["#f43f5e", "#ec4899"],
-  ["#f59e0b", "#f97316"],
-  ["#10b981", "#059669"],
-  ["#3b82f6", "#6366f1"],
-];
-function hashStr(s: string) {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
-  return Math.abs(h);
-}
 function Cover({ track, className = "" }: { track: Track; className?: string }) {
   if (track.cover_url) {
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={track.cover_url} alt={track.title} loading="lazy" decoding="async" className={`w-full h-full object-cover ${className}`} />;
   }
-  const [c1, c2] = PALETTES[hashStr(track.title + track.category) % PALETTES.length];
+  const [c1, c2] = PALETTES[hashString(track.title + track.category) % PALETTES.length];
   return (
     <div className={`w-full h-full flex items-center justify-center ${className}`} style={{ background: `linear-gradient(135deg, ${c1}, ${c2})` }}>
       <svg width="38%" height="38%" viewBox="0 0 24 24" fill="white" className="opacity-90 drop-shadow">
@@ -52,13 +40,6 @@ function Cover({ track, className = "" }: { track: Track; className?: string }) 
       </svg>
     </div>
   );
-}
-
-function formatDuration(secs?: number): string {
-  if (!secs || !Number.isFinite(secs) || secs <= 0) return "--:--";
-  const m = Math.floor(secs / 60);
-  const s = Math.floor(secs % 60);
-  return `${m}:${s < 10 ? "0" : ""}${s}`;
 }
 
 // ─── Section heading with "View all" ─────────────────────────────────────────

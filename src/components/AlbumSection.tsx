@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import useSWR from "swr";
+import { hashString, PALETTES } from "@/lib/utils";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -13,21 +14,6 @@ type Album = {
   cover_url?: string;
   source: "embedded" | "uploaded" | "none";
 };
-
-const COVER_PALETTES: [string, string][] = [
-  ["#6366f1", "#8b5cf6"],
-  ["#14b8a6", "#06b6d4"],
-  ["#f43f5e", "#ec4899"],
-  ["#f59e0b", "#f97316"],
-  ["#10b981", "#059669"],
-  ["#3b82f6", "#6366f1"],
-];
-
-function hashStr(s: string) {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
-  return Math.abs(h);
-}
 
 export default function AlbumSection({
   currentAlbum,
@@ -81,7 +67,7 @@ export default function AlbumSection({
       <div className={containerClasses}>
         {albums.map((album) => {
           const isSelected = currentAlbum === album.name;
-          const [c1, c2] = COVER_PALETTES[hashStr(album.name) % COVER_PALETTES.length];
+          const [c1, c2] = PALETTES[hashString(album.name) % PALETTES.length];
           return (
             <div
               key={album.name}

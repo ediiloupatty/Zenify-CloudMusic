@@ -564,6 +564,25 @@ export async function getUserFavorites(email: string): Promise<string[]> {
   }
 }
 
+// Fetch full track objects for a user's favorites in a single JOIN query,
+// avoiding the need to fetch ALL tracks and filter client-side.
+export async function getFavoriteTracks(email: string): Promise<Track[]> {
+  if (USE_MOCK) return [];
+  try {
+    const sql = `
+      ${TRACK_SELECT_WITH_COVER}
+      INNER JOIN favorites f ON f.track_id = t.id
+      WHERE f.user_email = ?
+      ORDER BY t.title ASC
+    `;
+    const rows = await queryD1(sql, [email]);
+    return (rows as Track[]).map(normalizeTrack);
+  } catch (error) {
+    console.error("Error fetching favorite tracks:", error);
+    return [];
+  }
+}
+
 export async function toggleFavoriteInD1(email: string, trackId: string, isFavorited: boolean) {
   if (USE_MOCK) return;
   try {
