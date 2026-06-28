@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import Fuse from "fuse.js";
 import { Track } from "@/lib/cloudflare";
 
 type AISearchBarProps = {
@@ -22,22 +23,35 @@ export default function AISearchBar({ allTracks, onFilteredTracks }: AISearchBar
   const abortRef = useRef<AbortController | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Local search: instant filter by title/artist
+  // Build a Fuse index whenever the track list changes. Fuse.js handles fuzzy
+  // matching, typo tolerance, and relevance scoring out of the box.
+  const fuse = useMemo(
+    () =>
+      new Fuse(allTracks, {
+        keys: [
+          { name: "title", weight: 0.5 },
+          { name: "artist", weight: 0.3 },
+          { name: "genre", weight: 0.1 },
+          { name: "category", weight: 0.1 },
+        ],
+        threshold: 0.4,        // 0 = exact, 1 = match anything
+        includeScore: true,
+        minMatchCharLength: 2,
+        ignoreLocation: true,  // match anywhere in the string
+      }),
+    [allTracks]
+  );
+
+  // Local search: fuzzy filter using Fuse.js (typo tolerant + ranked)
   const localSearch = useCallback(
     (q: string) => {
-      const lower = q.toLowerCase();
-      const filtered = allTracks.filter(
-        (t) =>
-          t.title.toLowerCase().includes(lower) ||
-          (t.artist && t.artist.toLowerCase().includes(lower)) ||
-          (t.genre && t.genre.toLowerCase().includes(lower)) ||
-          t.category.toLowerCase().includes(lower)
-      );
-      onFilteredTracks(filtered);
+      const results = fuse.search(q);
+      const filtered = results.map((r) => r.item);
+      onFilteredTracks(filtered.length > 0 ? filtered : []);
       setAiMessage(null);
       setIsAIMode(false);
     },
-    [allTracks, onFilteredTracks]
+    [fuse, onFilteredTracks]
   );
 
   // AI search: send to /api/ai/search

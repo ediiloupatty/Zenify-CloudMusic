@@ -29,11 +29,20 @@ type RepeatMode = "off" | "all" | "one";
 //   while keeping enough randomness that it still feels shuffled.
 // ---------------------------------------------------------------------------
 
-// Relative weights for the vibe walk. Tune freely.
-const W_BASE = 1; // every track always has a baseline chance
-const W_GENRE = 4; // strong pull toward the same genre
-const W_CATEGORY = 3; // pull toward the same category (mood/suasana)
-const W_POPULAR = 2; // gentle bias toward songs the user plays a lot
+// ---------------------------------------------------------------------------
+// Dithered Shuffle with Cooldown, Decay & Genre Spread
+// ---------------------------------------------------------------------------
+// Weights for the vibe walk. Tune freely.
+const W_BASE = 1;      // every track always has a baseline chance
+const W_GENRE = 4;     // pull toward the same genre
+const W_CATEGORY = 3;  // pull toward the same category (mood/suasana)
+const W_POPULAR = 2;   // gentle bias toward songs the user plays a lot
+
+// Anti-monotony constraints
+const ARTIST_COOLDOWN = 3;     // same artist can't appear within N slots
+const GENRE_RUN_MAX = 2;       // max consecutive tracks of same genre before penalty
+const RECENCY_DECAY = 0.4;     // penalty floor for recently played tracks (lower = stronger)
+const COOLDOWN_PENALTY = 0.05; // near-zero weight for tracks violating cooldown
 
 const identityOrder = (length: number): number[] =>
   Array.from({ length }, (_, i) => i);
@@ -41,6 +50,7 @@ const identityOrder = (length: number): number[] =>
 // Pick one item index by weight (roulette-wheel selection).
 function weightedPick(items: number[], weights: number[]): number {
   const total = weights.reduce((a, b) => a + b, 0);
+  if (total <= 0) return items[Math.floor(Math.random() * items.length)];
   let r = Math.random() * total;
   for (let i = 0; i < items.length; i++) {
     r -= weights[i];
@@ -49,18 +59,41 @@ function weightedPick(items: number[], weights: number[]): number {
   return items[items.length - 1];
 }
 
-// Build a play order starting at `anchor`, then greedily growing it with a
-// weighted-random pick that favours tracks similar to the last placed one.
+// Count how many hours ago a track was last played (0 = never played = no penalty).
+function hoursSinceLastPlayed(track: Track): number {
+  const lp = (track as Record<string, unknown>).last_played_at;
+  if (!lp) return 0;
+  const diff = Date.now() - new Date(lp as string).getTime();
+  return Math.max(0, diff / (1000 * 60 * 60));
+}
+
+// Build a play order starting at `anchor`, using a greedy weighted-random walk
+// with artist cooldown, genre spread, and recency decay so the queue never
+// feels monotonous.
 function buildVibeOrder(tracks: Track[], anchor: number): number[] {
   const n = tracks.length;
   if (n <= 1) return n === 1 ? [0] : [];
 
   const maxPlays = Math.max(1, ...tracks.map((t) => t.play_count || 0));
 
+  // Pre-compute recency factor for each track: 1.0 (never played / long ago)
+  // down to RECENCY_DECAY (just played). Uses exponential decay over ~24h.
+  const recencyFactor = tracks.map((t) => {
+    const h = hoursSinceLastPlayed(t);
+    if (h === 0) return 1; // never played — full weight
+    // Within the last ~2 hours → heavy penalty; decays back to 1.0 over ~24h
+    return RECENCY_DECAY + (1 - RECENCY_DECAY) * (1 - Math.exp(-h / 8));
+  });
+
   const remaining = new Set<number>();
   for (let i = 0; i < n; i++) if (i !== anchor) remaining.add(i);
 
   const order = [anchor];
+  // Recent artist ring-buffer for cooldown checks
+  const recentArtists: (string | undefined)[] = [tracks[anchor].artist];
+  // Track consecutive genre runs
+  let genreRun = 1;
+  let lastGenre = tracks[anchor].genre;
   let last = tracks[anchor];
 
   while (remaining.size > 0) {
@@ -68,15 +101,52 @@ function buildVibeOrder(tracks: Track[], anchor: number): number[] {
     const weights = candidates.map((idx) => {
       const t = tracks[idx];
       let w = W_BASE;
+
+      // --- Vibe affinity ---
       if (last.genre && t.genre && last.genre === t.genre) w += W_GENRE;
       if (last.category && t.category && last.category === t.category) w += W_CATEGORY;
       w += W_POPULAR * ((t.play_count || 0) / maxPlays);
-      return w;
+
+      // --- Artist cooldown penalty ---
+      // If this artist appeared in the last ARTIST_COOLDOWN slots, heavily penalize
+      if (t.artist) {
+        const cooldownWindow = recentArtists.slice(-ARTIST_COOLDOWN);
+        if (cooldownWindow.includes(t.artist)) {
+          w *= COOLDOWN_PENALTY;
+        }
+      }
+
+      // --- Genre spread penalty ---
+      // After GENRE_RUN_MAX consecutive tracks of the same genre, penalize
+      // adding another of that genre to encourage variety
+      if (genreRun >= GENRE_RUN_MAX && t.genre && t.genre === lastGenre) {
+        w *= 0.2;
+      }
+
+      // --- Recency decay ---
+      // Recently played tracks get lower weight so "forgotten" tracks surface
+      w *= recencyFactor[idx];
+
+      return Math.max(w, 0.001); // never fully zero
     });
+
     const pick = weightedPick(candidates, weights);
     order.push(pick);
     remaining.delete(pick);
-    last = tracks[pick];
+
+    const picked = tracks[pick];
+    recentArtists.push(picked.artist);
+    // Keep the ring-buffer bounded
+    if (recentArtists.length > ARTIST_COOLDOWN + 1) recentArtists.shift();
+
+    // Track genre runs
+    if (picked.genre && picked.genre === lastGenre) {
+      genreRun++;
+    } else {
+      genreRun = 1;
+      lastGenre = picked.genre;
+    }
+    last = picked;
   }
   return order;
 }
