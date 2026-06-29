@@ -57,7 +57,7 @@ export default async function Home({
 
         {/* TOP BAR */}
         <header
-          className="flex items-center justify-between px-4 md:px-8 pt-5 md:pt-7 pb-4 md:pb-5 flex-shrink-0 gap-3 backdrop-blur-xl transition-all duration-500 z-20"
+          className="flex items-center justify-between px-4 md:px-8 pt-5 md:pt-7 pb-4 md:pb-5 flex-shrink-0 gap-3 backdrop-blur-xl transition-all duration-500 z-50"
           style={{
             background: "rgba(43, 51, 63, 0.4)",
             backdropFilter: "blur(24px)",

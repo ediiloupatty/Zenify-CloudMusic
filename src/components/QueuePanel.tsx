@@ -127,7 +127,7 @@ export default function QueuePanel({
   return (
     <>
       {/* Click-away backdrop */}
-      <div className="fixed inset-0 z-40 bg-black/30 queue-backdrop-in" onClick={onClose} />
+      <div className="fixed inset-x-0 bottom-0 top-[76px] md:top-[88px] z-40 bg-black/30 queue-backdrop-in" onClick={onClose} />
 
       <aside
         role="dialog"
