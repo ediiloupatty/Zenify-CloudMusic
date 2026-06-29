@@ -55,6 +55,22 @@ window.addEventListener('zenify:nowplaying', function (e) {
   function inject(){
     if (!document.body || document.getElementById('zenify-titlebar')) return;
 
+    // Replace WebView2's default offline / error page with a premium dark mode Zenify screen
+    if (location.href.indexOf('chromewebdata') !== -1 || document.body.innerHTML.indexOf('ERR_INTERNET_DISCONNECTED') !== -1 || document.body.innerHTML.indexOf('ERR_CONNECTION_REFUSED') !== -1) {
+      document.body.innerHTML = '';
+      document.body.style.background = '#0a0c11';
+      var errBox = document.createElement('div');
+      errBox.style.cssText = 'position:fixed;top:32px;left:0;right:0;bottom:0;background:#0a0c11;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#e2e8f0;font-family:system-ui,-apple-system,sans-serif;z-index:2147483640;padding:20px;text-align:center;user-select:none';
+      errBox.innerHTML = '<div style="position:absolute;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle, rgba(20,184,166,0.12) 0%, transparent 70%);top:50%;left:50%;transform:translate(-50%, -50%);pointer-events:none;"></div>' +
+        '<div style="width:68px;height:68px;border-radius:22px;background:rgba(20,184,166,0.08);border:1px solid rgba(20,184,166,0.18);display:flex;align-items:center;justify-content:center;margin-bottom:24px;box-shadow:0 12px 32px rgba(0,0,0,0.4);">' +
+        '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#14b8a6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></div>' +
+        '<h1 style="font-size:22px;font-weight:700;letter-spacing:-0.03em;margin:0 0 8px 0;color:#f8fafc;">Unable to Connect to Zenify</h1>' +
+        '<p style="font-size:14px;color:#94a3b8;max-width:360px;margin:0 0 30px 0;line-height:1.6;">Please check your network connection or verify that the Zenify server is running. Playback and library access will resume once the connection is restored.</p>' +
+        '<button onclick="location.reload()" style="background:#14b8a6;color:#042f2e;border:0;padding:11px 26px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 4px 12px rgba(20,184,166,0.25);transition:all 0.2s;">Try Again</button>' +
+        '<div style="margin-top:36px;font-size:11px;font-family:monospace;color:#64748b;letter-spacing:0.05em;background:rgba(255,255,255,0.03);padding:5px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.05);">ERR_INTERNET_DISCONNECTED</div>';
+      document.body.appendChild(errBox);
+    }
+
     var style = document.createElement('style');
     style.id = 'zenify-titlebar-style';
     // Reserve the 32px for the title bar on normal (in-flow) pages, but NOT on
