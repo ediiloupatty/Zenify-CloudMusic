@@ -9,9 +9,12 @@ export default function BottomNav() {
   const { tracks } = usePlayer();
   const hasPlayer = tracks.length > 0;
 
+  // Sembunyikan BottomNav di Landing Page utama agar tampilan tetap bersih dan imersif
+  if (pathname === "/") return null;
+
   const tabs = [
     {
-      href: "/",
+      href: "/player",
       label: "Home",
       icon: (active: boolean) => (
         <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">

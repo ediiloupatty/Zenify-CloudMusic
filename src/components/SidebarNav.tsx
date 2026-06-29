@@ -12,7 +12,7 @@ export default function SidebarNav({ isAdmin }: { isAdmin: boolean }) {
   const pathname = usePathname();
 
   const items: Item[] = [
-    { href: "/", label: "Home", icon: <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" /> },
+    { href: "/player", label: "Home", icon: <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" /> },
     {
       href: "/favorites",
       label: "Favorites",
@@ -40,7 +40,7 @@ export default function SidebarNav({ isAdmin }: { isAdmin: boolean }) {
   return (
     <>
       {items.map((it) => {
-        const active = it.href === "/" ? pathname === "/" : pathname.startsWith(it.href);
+        const active = it.href === "/player" ? pathname === "/player" : pathname.startsWith(it.href);
         const color = active ? "var(--accent)" : "var(--text-muted)";
         return (
           <Link
