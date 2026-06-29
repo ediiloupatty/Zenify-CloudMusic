@@ -1,5 +1,6 @@
-import { S3Client } from "@aws-sdk/client-s3";
+import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import { unstable_cache } from "next/cache";
+import * as mm from "music-metadata";
 import {
   USE_MOCK_DATA as USE_MOCK,
   MOCK_TRACKS, MOCK_ALBUMS, MOCK_ARTISTS, MOCK_PLAYLISTS, MOCK_CATEGORY_COUNTS,
@@ -280,6 +281,64 @@ function normalizeTrack(t: any): Track {
   };
 }
 
+async function normalizeTracks(rows: any[]): Promise<Track[]> {
+  const tracks: Track[] = [];
+  const bucketName = process.env.R2_BUCKET_NAME || "zenify";
+
+  for (const t of rows) {
+    let bit_depth = t.bit_depth;
+    let sample_rate = t.sample_rate;
+
+    if ((bit_depth == null || sample_rate == null) && t.file_url) {
+      try {
+        const filename = r2KeyFromUrl(t.file_url) || t.file_url.split("/").pop();
+        if (filename) {
+          const obj = await r2Client.send(
+            new GetObjectCommand({
+              Bucket: bucketName,
+              Key: filename,
+              Range: "bytes=0-524287",
+            })
+          );
+          if (obj.Body) {
+            const bytes = await obj.Body.transformToByteArray();
+            const buffer = Buffer.from(bytes);
+            const metadata = await mm.parseBuffer(buffer, undefined, { duration: false });
+            const f = metadata.format;
+            if (f.bitsPerSample != null) bit_depth = f.bitsPerSample;
+            if (f.sampleRate != null) sample_rate = f.sampleRate;
+
+            if (bit_depth != null || sample_rate != null) {
+              await queryD1(`UPDATE tracks SET bit_depth = ?, sample_rate = ? WHERE id = ?`, [
+                bit_depth,
+                sample_rate,
+                t.id,
+              ], { silent: true }).catch(() => {});
+            }
+          }
+        }
+      } catch (err: any) {
+        if (err?.Code !== "NoSuchKey") {
+          console.warn(`[R2] Failed to parse specs for track ${t.id}:`, err?.message || err);
+        }
+      }
+    }
+
+    if (bit_depth == null) bit_depth = t.file_url?.includes(".flac") ? 24 : 16;
+    if (sample_rate == null) sample_rate = t.file_url?.includes(".flac") ? 48000 : 44100;
+
+    tracks.push({
+      ...t,
+      bit_depth,
+      sample_rate,
+      file_url: toProxyUrl(t.file_url, "audio") ?? t.file_url,
+      cover_url: toProxyUrl(t.cover_url, "cover"),
+    });
+  }
+
+  return tracks;
+}
+
 // Fetch tracks based on category or fetch all if none provided
 export const getTracksByCategory = cacheFn(
   async (category: string | null = null): Promise<Track[]> => {
@@ -294,7 +353,7 @@ export const getTracksByCategory = cacheFn(
       }
 
       const rows = await queryD1(sql, params);
-      return (rows as Track[]).map(normalizeTrack);
+      return await normalizeTracks(rows);
     } catch (error) {
       console.error("Error fetching tracks:", error);
       return [];
@@ -308,8 +367,8 @@ export async function getTrackById(id: string): Promise<Track | null> {
   if (USE_MOCK) return MOCK_TRACKS.find((t) => t.id === id) ?? null;
   try {
     const rows = await queryD1(`${TRACK_SELECT_WITH_COVER} WHERE t.id = ? LIMIT 1`, [id]);
-    const track = (rows as Track[])[0];
-    return track ? normalizeTrack(track) : null;
+    const tracks = await normalizeTracks(rows);
+    return tracks[0] ?? null;
   } catch {
     return null;
   }
@@ -322,7 +381,7 @@ export const getTracksByAlbum = cacheFn(
     try {
       const sql = `${TRACK_SELECT_WITH_COVER} WHERE t.album = ? ORDER BY t.created_at DESC`;
       const rows = await queryD1(sql, [album]);
-      return (rows as Track[]).map(normalizeTrack);
+      return await normalizeTracks(rows);
     } catch (error) {
       console.error("Error fetching album tracks:", error);
       return [];
@@ -347,7 +406,7 @@ export const getTracksByArtist = cacheFn(
     try {
       const sql = `${TRACK_SELECT_WITH_COVER} WHERE t.artist = ? ORDER BY COALESCE(t.play_count, 0) DESC, t.created_at ASC`;
       const rows = await queryD1(sql, [artist]);
-      return (rows as Track[]).map(normalizeTrack);
+      return await normalizeTracks(rows);
     } catch (error) {
       console.error("Error fetching artist tracks:", error);
       return [];
@@ -378,7 +437,7 @@ export const getRecentlyPlayed = cacheFn(
     try {
       const sql = `${TRACK_SELECT_WITH_COVER} WHERE t.last_played_at IS NOT NULL ORDER BY t.last_played_at DESC LIMIT ${Number(limit)}`;
       const rows = await queryD1(sql);
-      return (rows as Track[]).map(normalizeTrack);
+      return await normalizeTracks(rows);
     } catch (error) {
       console.error("Error fetching recently played:", error);
       return [];
@@ -395,7 +454,7 @@ export const getNewTracks = cacheFn(
     try {
       const sql = `${TRACK_SELECT_WITH_COVER} ORDER BY t.created_at DESC LIMIT ${Number(limit)}`;
       const rows = await queryD1(sql);
-      return (rows as Track[]).map(normalizeTrack);
+      return await normalizeTracks(rows);
     } catch (error) {
       console.error("Error fetching new tracks:", error);
       return [];
@@ -576,7 +635,7 @@ export async function getFavoriteTracks(email: string): Promise<Track[]> {
       ORDER BY t.title ASC
     `;
     const rows = await queryD1(sql, [email]);
-    return (rows as Track[]).map(normalizeTrack);
+    return await normalizeTracks(rows);
   } catch (error) {
     console.error("Error fetching favorite tracks:", error);
     return [];

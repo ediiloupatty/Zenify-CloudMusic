@@ -14,9 +14,19 @@ export function formatAudioSpecs(track: Pick<Track, "file_url" | "bit_depth" | "
     return `${bit_depth}-bit ${khzStr}kHz`;
   }
 
-  if (file_url && (file_url.endsWith(".flac") || file_url.endsWith(".wav"))) {
-    return "HI-RES";
+  if (bit_depth) {
+    return `${bit_depth}-bit`;
   }
 
-  return null;
+  if (sample_rate) {
+    const khz = sample_rate / 1000;
+    const khzStr = Number.isInteger(khz) ? String(khz) : khz.toFixed(1);
+    return `${khzStr}kHz`;
+  }
+
+  if (file_url && (file_url.endsWith(".flac") || file_url.endsWith(".wav"))) {
+    return "24-bit 48kHz";
+  }
+
+  return "16-bit 44.1kHz";
 }
