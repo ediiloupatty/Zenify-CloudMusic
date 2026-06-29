@@ -6,9 +6,9 @@ export default async function LandingPage() {
   const isLoggedIn = !!session?.user;
 
   return (
-    <div className="min-h-screen font-sans bg-[#1d2230] text-slate-100 overflow-x-hidden selection:bg-[#14b8a6] selection:text-white flex flex-col">
-      {/* ─── NAVBAR (Sticky) ───────────────────────────────────── */}
-      <header className="sticky top-0 z-50 w-full px-8 md:px-16 py-6 bg-[#1d2230]/90 backdrop-blur-md border-b border-slate-800/80 transition-all flex-shrink-0">
+    <div className="min-h-screen font-sans bg-[#1d2230] text-slate-100 selection:bg-[#14b8a6] selection:text-white flex flex-col">
+      {/* ─── NAVBAR (Fixed & Bulletproof) ──────────────────────── */}
+      <header className="fixed top-0 left-0 right-0 z-50 w-full px-8 md:px-16 py-6 bg-[#1d2230]/90 backdrop-blur-md border-b border-slate-800/80 transition-all">
         <div className="max-w-[1400px] mx-auto flex items-center justify-between w-full">
           <Link href="/" className="flex items-center gap-3 group">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-[#14b8a6] transition-transform group-hover:scale-110">
@@ -40,7 +40,7 @@ export default async function LandingPage() {
       </header>
 
       {/* ─── HERO SECTION ──────────────────────────────────────── */}
-      <section id="about" className="flex-1 px-8 md:px-16 pt-16 pb-24 max-w-[1400px] mx-auto w-full flex flex-col items-start justify-center text-left">
+      <section id="about" className="flex-1 px-8 md:px-16 pt-36 pb-24 max-w-[1400px] mx-auto w-full flex flex-col items-start justify-center text-left">
         <p className="text-sm font-semibold text-slate-400 mb-6 tracking-wide uppercase">
           A minimal music player for Windows
         </p>
