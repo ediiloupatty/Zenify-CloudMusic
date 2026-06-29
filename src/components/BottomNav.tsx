@@ -51,12 +51,12 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="md:hidden fixed bottom-0 left-0 w-full z-50 flex items-center justify-around px-3 pt-2.5 pb-4 border-t shadow-[0_-10px_35px_rgba(0,0,0,0.65)]"
+      className="md:hidden fixed bottom-0 left-0 w-full z-50 flex items-center justify-around px-2 pt-2 pb-safe border-t"
       style={{
-        background: "rgba(15, 23, 42, 0.85)",
-        borderColor: "rgba(255, 255, 255, 0.12)",
-        backdropFilter: "blur(30px)",
-        WebkitBackdropFilter: "blur(30px)",
+        background: "var(--nav-bg)",
+        borderColor: "var(--border-subtle)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
       }}
     >
       {tabs.map((tab) => {
