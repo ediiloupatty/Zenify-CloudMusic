@@ -195,14 +195,16 @@ export default function BottomPlayer() {
     const hasTimestamps = currentTrack.lyrics && /\[\d{2}:\d{2}\.\d{2,3}\]/.test(currentTrack.lyrics);
     if (hasTimestamps) return;
 
-    const query = `${currentTrack.artist || ''} ${cleanTitle(currentTrack.title)}`.trim();
-    if (!query) return;
+    const cleanedTitle = cleanTitle(currentTrack.title);
+    if (!cleanedTitle) return;
 
     // AbortController cancels in-flight request if track changes before it resolves
     const controller = new AbortController();
     setIsFetchingLyrics(true);
 
-    fetch(`/api/lyrics?q=${encodeURIComponent(query)}`, { signal: controller.signal })
+    const url = `/api/lyrics?artist=${encodeURIComponent(currentTrack.artist || '')}&title=${encodeURIComponent(cleanedTitle)}&q=${encodeURIComponent(`${currentTrack.artist || ''} ${cleanedTitle}`.trim())}&t=${Date.now()}`;
+
+    fetch(url, { signal: controller.signal })
       .then(res => res.json())
       .then(data => { if (data.syncedLyrics) setExternalLyrics(data.syncedLyrics); })
       .catch(err => { if (err.name !== 'AbortError') console.error("Failed to fetch synced lyrics", err); })
