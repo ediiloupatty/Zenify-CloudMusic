@@ -37,6 +37,33 @@ self.addEventListener("fetch", (event) => {
   // Everything else falls through to the network (default browser behavior)
 });
 
+// Full-file downloads currently in flight, keyed by song URL. Without this, a
+// slow connection used to spawn a brand-new full download on EVERY range-request
+// that missed the (not-yet-populated) cache, so one song could be pulled 3–5×.
+// Now at most one background full-download runs per song.
+const inflightFull = new Set();
+
+// Kick off (at most once per song) a single background download of the full file
+// so it's available offline next time. De-duplicated via inflightFull.
+function populateFullCache(cache, cacheKey, reqHeaders) {
+  const key = cacheKey.url;
+  if (inflightFull.has(key)) return;
+  inflightFull.add(key);
+
+  const fullHeaders = filterHeaders(reqHeaders, ["range"]);
+  fullHeaders.set("X-Full-Audio", "1");
+  const fullRequest = new Request(key, { method: "GET", headers: fullHeaders });
+
+  fetch(fullRequest)
+    .then((res) => {
+      if (res.status === 200) {
+        return cache.put(cacheKey, res.clone()).then(() => evictIfNeeded());
+      }
+    })
+    .catch(() => {})
+    .finally(() => inflightFull.delete(key));
+}
+
 // Audio: cache-first strategy. If cached, serve from cache. Otherwise fetch,
 // cache the full response for next time, and return it.
 async function handleAudioRequest(request) {
@@ -56,24 +83,20 @@ async function handleAudioRequest(request) {
     return cached;
   }
 
-  // Not cached — fetch the stream directly from network to ensure instant playback (fast TTFB).
-  // In the background, request the full audio file with X-Full-Audio header to populate the offline cache.
+  // Not cached — fetch directly from network to ensure instant playback (fast TTFB).
   try {
     const streamResponse = await fetch(request);
 
-    // Run full caching in the background without blocking the active audio stream
-    const fullHeaders = filterHeaders(request.headers, ["range"]);
-    fullHeaders.set("X-Full-Audio", "1");
-    const fullRequest = new Request(cacheKey.url, {
-      method: "GET",
-      headers: fullHeaders,
-    });
+    // If the network already handed us the FULL file (a non-range request, e.g.
+    // a `preload` warm-up), cache THAT directly — no second download needed.
+    if (streamResponse.status === 200) {
+      cache.put(cacheKey, streamResponse.clone()).then(() => evictIfNeeded()).catch(() => {});
+      return streamResponse;
+    }
 
-    fetch(fullRequest).then(res => {
-      if (res.status === 200) {
-        cache.put(cacheKey, res.clone()).then(() => evictIfNeeded());
-      }
-    }).catch(() => {});
+    // Otherwise it's a partial (206) playback stream. Populate the offline cache
+    // with a single de-duplicated background full-download, then return the stream.
+    populateFullCache(cache, cacheKey, request.headers);
 
     return streamResponse;
   } catch (err) {

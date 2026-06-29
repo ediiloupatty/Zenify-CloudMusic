@@ -1184,11 +1184,15 @@ export default function BottomPlayer() {
         preload="auto"
         controlsList="nodownload"
       />
+      {/* Warms up the NEXT track. preload="metadata" (not "auto") fetches only a
+          small header instead of eagerly downloading the entire upcoming song in
+          the background — the latter quietly burned data even while the window was
+          behind a game. Crossfade still gets a head start without the full pull. */}
       {nextAudioSrc && (
         <audio
           src={nextAudioSrc}
           crossOrigin="anonymous"
-          preload="auto"
+          preload="metadata"
           muted
           controlsList="nodownload"
         />
