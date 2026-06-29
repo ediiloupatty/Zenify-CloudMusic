@@ -13,7 +13,7 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("http://localhost:3000"),
+  metadataBase: new URL("https://www.zenify.cc"),
   title: "Zenify - Cloud Music",
   description: "Your personal hi-res cloud music player",
   applicationName: "Zenify",
@@ -30,8 +30,16 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "Zenify",
+    url: "https://www.zenify.cc",
     title: "Zenify - Cloud Music",
     description: "Your personal hi-res cloud music player",
+    images: [{ url: "/background.webp", width: 1920, height: 1039, alt: "Zenify" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Zenify - Cloud Music",
+    description: "Your personal hi-res cloud music player",
+    images: ["/background.webp"],
   },
 };
 

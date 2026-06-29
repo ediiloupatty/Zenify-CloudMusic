@@ -42,7 +42,7 @@ export default async function LandingPage() {
           <nav className="hidden md:flex items-center gap-10 text-sm font-medium text-slate-400">
             <a href="#about" className="hover:text-white transition-colors">about</a>
             <a href="#features" className="hover:text-white transition-colors">features</a>
-            <a href="#download" className="text-white border-b-2 border-[#14b8a6] pb-1 font-semibold">download</a>
+            <a href="#download" className="hover:text-white transition-colors">download</a>
             <a href="https://github.com/ediiloupatty/Zenify" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">github</a>
             <Link href="/player" className="hover:text-white transition-colors font-semibold text-[#14b8a6]">open player</Link>
           </nav>
@@ -57,48 +57,53 @@ export default async function LandingPage() {
 
       {/* ─── HERO SECTION ──────────────────────────────────────── */}
       <section id="about" className="relative z-10 flex-1 px-8 md:px-16 pt-36 pb-24 max-w-[1400px] mx-auto w-full flex flex-col items-start justify-center text-left">
-        <p className="text-sm font-semibold text-slate-400 mb-6 tracking-wide uppercase">
+        <p className="rise-in text-sm font-semibold text-slate-400 mb-6 tracking-wide uppercase">
           A minimal music player for Windows
         </p>
 
-        <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-light tracking-tight leading-none text-white mb-2">
-          MUSIC,
-        </h1>
-        <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-light tracking-tight leading-none text-[#14b8a6] mb-10">
-          REIMAGINED.
+        <h1 className="rise-in rise-in-d1 text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-light tracking-tight leading-none mb-10">
+          <span className="block text-white mb-2">MUSIC,</span>
+          <span className="block text-[#14b8a6]">REIMAGINED.</span>
         </h1>
 
         {/* Clean horizontal line */}
-        <div className="w-16 h-[2px] bg-slate-500/60 mb-10" />
+        <div className="rise-in rise-in-d2 w-16 h-[2px] bg-slate-500/60 mb-10" />
 
-        <p className="text-xl text-slate-300 leading-relaxed mb-12 font-normal max-w-2xl">
+        <p className="rise-in rise-in-d2 text-xl text-slate-300 leading-relaxed mb-12 font-normal max-w-2xl">
           Zenify is a lightweight desktop music player that helps you organize, play, and enjoy your music beautifully.
         </p>
 
-        <div id="download">
+        {/* Primary: download the Windows app. Secondary: open the web player. */}
+        <div id="download" className="rise-in rise-in-d3 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
           <a
             href="https://github.com/ediiloupatty/Zenify/releases"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-4 px-10 py-5 bg-transparent border-2 border-[#14b8a6] text-[#14b8a6] hover:bg-[#14b8a6] hover:text-[#1d2230] transition-all font-bold tracking-wider text-base shadow-[0_0_30px_rgba(20,184,166,0.25)] group"
+            className="inline-flex items-center justify-center gap-4 px-10 py-5 bg-[#14b8a6] text-[#1d2230] hover:bg-[#0f9d8f] transition-all font-bold tracking-wider text-base shadow-[0_0_30px_rgba(20,184,166,0.25)]"
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="transition-colors">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z" />
             </svg>
             <span>DOWNLOAD FOR WINDOWS</span>
           </a>
+          <Link
+            href="/player"
+            className="inline-flex items-center justify-center gap-3 px-10 py-5 bg-transparent border border-slate-600 text-slate-200 hover:border-white hover:text-white transition-all font-semibold tracking-wider text-base"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M5 4.5v15l13-7.5-13-7.5z" fill="currentColor" />
+            </svg>
+            <span>OPEN WEB PLAYER</span>
+          </Link>
         </div>
 
-        <div className="mt-8 flex items-center gap-4 text-sm text-slate-400 font-medium">
+        <div className="rise-in rise-in-d4 mt-8 flex items-center gap-4 text-sm text-slate-400 font-medium">
           <span>Windows 10 or later</span>
           <span>•</span>
           <span>Free to use</span>
-          <span>•</span>
-          <Link href="/player" className="hover:text-white transition-colors underline font-semibold text-slate-300">
-            Open Web Player
-          </Link>
         </div>
       </section>
+
 
       {/* ─── DIVIDER ───────────────────────────────────────────── */}
       <div className="relative z-10 max-w-[1400px] mx-auto px-8 md:px-16 w-full">
@@ -109,30 +114,30 @@ export default async function LandingPage() {
       <section id="features" className="relative z-10 max-w-[1400px] mx-auto px-8 md:px-16 pb-28 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 w-full">
         <div className="flex flex-col">
           <span className="text-base font-bold text-[#14b8a6] mb-2 font-mono">01</span>
-          <h3 className="text-xl font-bold text-white mb-3 tracking-tight">Minimal Design</h3>
+          <h3 className="text-xl font-bold text-white mb-3 tracking-tight">Synced Lyrics</h3>
           <p className="text-slate-400 text-sm leading-relaxed font-normal">
-            Clean and modern interface that stays out of your way.
+            Time-synced lyrics that scroll line by line, matched automatically to every track.
           </p>
         </div>
         <div className="flex flex-col">
           <span className="text-base font-bold text-[#14b8a6] mb-2 font-mono">02</span>
-          <h3 className="text-xl font-bold text-white mb-3 tracking-tight">Your Music</h3>
+          <h3 className="text-xl font-bold text-white mb-3 tracking-tight">Lossless Audio</h3>
           <p className="text-slate-400 text-sm leading-relaxed font-normal">
-            Play your local files with full support for all formats.
+            Full-quality FLAC and WAV playback, no re-encoding, no quality loss.
           </p>
         </div>
         <div className="flex flex-col">
           <span className="text-base font-bold text-[#14b8a6] mb-2 font-mono">03</span>
-          <h3 className="text-xl font-bold text-white mb-3 tracking-tight">Smart Library</h3>
+          <h3 className="text-xl font-bold text-white mb-3 tracking-tight">Daily Mix</h3>
           <p className="text-slate-400 text-sm leading-relaxed font-normal">
-            Organize automatically. Find anything, instantly.
+            Personalized mixes that adapt to what you actually listen to.
           </p>
         </div>
         <div className="flex flex-col">
           <span className="text-base font-bold text-[#14b8a6] mb-2 font-mono">04</span>
-          <h3 className="text-xl font-bold text-white mb-3 tracking-tight">Built for Windows</h3>
+          <h3 className="text-xl font-bold text-white mb-3 tracking-tight">Play Anywhere</h3>
           <p className="text-slate-400 text-sm leading-relaxed font-normal">
-            Lightweight, fast, and optimized for performance.
+            Use the desktop app, or open the same player right in your browser.
           </p>
         </div>
       </section>

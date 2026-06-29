@@ -1,4 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
+import { queryD1 } from "@/lib/cloudflare";
+import { USE_MOCK_DATA } from "@/lib/mockData";
 
 export const dynamic = 'force-dynamic';
 // lrclib's search endpoint currently responds in ~8-13s. Give the whole
@@ -110,7 +112,26 @@ async function lrclibFetch(url: string): Promise<unknown | null> {
   return res.json();
 }
 
-function hit(lyrics: string) {
+// Matches an LRC timestamp like [00:23.54] — i.e. time-synced lyrics.
+const SYNCED_RE = /\[\d{2}:\d{2}[.:]\d{2,3}\]/;
+
+// Persist a successful synced-lyrics result onto the track so future plays read
+// it straight from the DB (instant) instead of hitting slow lrclib again. Only
+// time-synced lyrics are cached — plain text wouldn't satisfy the player's
+// "already synced" check and would just re-trigger this fetch.
+async function cacheSyncedLyrics(id: string, lyrics: string) {
+  if (USE_MOCK_DATA || !id || !SYNCED_RE.test(lyrics)) return;
+  try {
+    await queryD1(`UPDATE tracks SET lyrics = ? WHERE id = ?`, [lyrics, id], { silent: true });
+  } catch {
+    /* best-effort cache — never let a write failure affect the response */
+  }
+}
+
+function hit(lyrics: string, id: string) {
+  // Schedule the DB write to run AFTER the response is sent, so caching never
+  // adds latency to the (already slow) lyrics request.
+  if (id) after(() => cacheSyncedLyrics(id, lyrics));
   return NextResponse.json({ syncedLyrics: lyrics }, { headers: { "Cache-Control": HIT_CACHE } });
 }
 function miss(status = 200) {
@@ -123,6 +144,7 @@ export async function GET(request: Request) {
   const artist = searchParams.get("artist") || "";
   const title = searchParams.get("title") || "";
   const duration = Math.round(Number(searchParams.get("duration")) || 0);
+  const id = searchParams.get("id") || ""; // track id, used to cache the result
 
   const effectiveTitle = title || q;
   if (!effectiveTitle) {
@@ -140,7 +162,7 @@ export async function GET(request: Request) {
       if (duration > 0) params.set("duration", String(duration));
       const data = (await lrclibFetch(`https://lrclib.net/api/get?${params}`)) as LrcItem | null;
       const lyrics = data?.syncedLyrics || data?.plainLyrics;
-      if (lyrics) return hit(lyrics);
+      if (lyrics) return hit(lyrics, id);
     }
 
     // 2. Search by artist + title, then filter/rank by duration + name match.
@@ -149,7 +171,7 @@ export async function GET(request: Request) {
       await lrclibFetch(`https://lrclib.net/api/search?q=${encodeURIComponent(searchQuery)}`),
       query
     );
-    if (tier2) return hit(tier2);
+    if (tier2) return hit(tier2, id);
 
     // 3. Last resort: search by title only (artist string may be the culprit).
     //    The accuracy guard still applies, so a wrong-song hit is rejected.
@@ -158,7 +180,7 @@ export async function GET(request: Request) {
         await lrclibFetch(`https://lrclib.net/api/search?q=${encodeURIComponent(title)}`),
         query
       );
-      if (tier3) return hit(tier3);
+      if (tier3) return hit(tier3, id);
     }
 
     return miss();
