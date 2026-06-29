@@ -13,6 +13,7 @@ import ArtistGrid from "@/components/ArtistGrid";
 import PlaylistGrid from "@/components/PlaylistGrid";
 import HeartButton from "@/components/HeartButton";
 import { hashString, formatDuration, PALETTES } from "@/lib/utils";
+import CoverImage from "@/components/CoverImage";
 
 type HomeContentProps = {
   tracks: Track[];
@@ -29,8 +30,7 @@ type HomeContentProps = {
 // ─── Cover art fallback (shared gradient logic) ──────────────────────────────
 function Cover({ track, className = "" }: { track: Track; className?: string }) {
   if (track.cover_url) {
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={track.cover_url} alt={track.title} loading="lazy" decoding="async" className={`w-full h-full object-cover ${className}`} />;
+    return <CoverImage src={track.cover_url} alt={track.title} className={className} />;
   }
   const [c1, c2] = PALETTES[hashString(track.title + track.category) % PALETTES.length];
   return (

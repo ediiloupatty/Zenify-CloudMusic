@@ -4,13 +4,13 @@ import { useState, useEffect } from "react";
 import { usePlayer } from "@/context/PlayerContext";
 import { cleanTitle } from "@/lib/cleanTitle";
 import { formatDuration } from "@/lib/utils";
+import CoverImage from "@/components/CoverImage";
 import type { Track } from "@/lib/cloudflare";
 import { formatAudioSpecs } from "@/lib/formatSpecs";
 
 function MiniCover({ track }: { track: Track }) {
   if (track.cover_url) {
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={track.cover_url} alt="" loading="lazy" className="w-full h-full object-cover" />;
+    return <CoverImage src={track.cover_url} alt="" />;
   }
   return (
     <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, var(--accent), #6366f1)" }}>

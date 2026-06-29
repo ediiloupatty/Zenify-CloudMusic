@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import useSWR from "swr";
 import { setAlbumCoverAction, removeAlbumCoverAction } from "@/app/admin/actions";
+import CoverImage from "@/components/CoverImage";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -107,8 +108,7 @@ export default function AlbumManager() {
               >
                 <div className="relative w-full aspect-square rounded-xl overflow-hidden">
                   {al.cover_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={al.cover_url} alt={al.name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                    <CoverImage src={al.cover_url} alt={al.name} />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg,#475569,#1e293b)" }}>
                       <svg width="26" height="26" viewBox="0 0 24 24" fill="rgba(255,255,255,0.5)">

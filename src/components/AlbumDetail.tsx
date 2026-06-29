@@ -7,6 +7,7 @@ import { usePlayer } from "@/context/PlayerContext";
 import { cleanTitle } from "@/lib/cleanTitle";
 import { toggleFavoriteAction } from "@/app/actions/favorites";
 import { hashString, formatDuration, PALETTES } from "@/lib/utils";
+import CoverImage from "@/components/CoverImage";
 
 function formatPlays(n?: number): string {
   if (!n || n <= 0) return "0";
@@ -131,8 +132,7 @@ export default function AlbumDetail({
           {/* Cover */}
           <div className="w-[170px] h-[170px] lg:w-[190px] lg:h-[190px] rounded-2xl overflow-hidden flex-shrink-0 shadow-2xl">
             {coverUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={coverUrl} alt={name} className="w-full h-full object-cover" />
+              <CoverImage src={coverUrl} alt={name} priority />
             ) : (
               <div className="w-full h-full flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${c1}, ${c2})` }}>
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="white" className="opacity-80"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" /></svg>

@@ -9,6 +9,7 @@ import { usePlayer } from "@/context/PlayerContext";
 import { cleanTitle } from "@/lib/cleanTitle";
 import { moveTrackToPlaylistAction } from "@/app/actions/tracks";
 import { useIncrementalList } from "./useIncrementalList";
+import CoverImage from "@/components/CoverImage";
 
 // Generate a consistent index from a string
 function hashString(str: string): number {
@@ -52,7 +53,7 @@ const MUSIC_ICONS = [
 
 function TrackCoverArt({ title, category, coverUrl }: { title: string; category: string; coverUrl?: string }) {
   if (coverUrl) {
-    return <img src={coverUrl} alt={title} loading="lazy" decoding="async" className="w-full h-full object-cover" />;
+    return <CoverImage src={coverUrl} alt={title} />;
   }
 
   const palIdx = hashString(title + category) % COVER_PALETTES.length;

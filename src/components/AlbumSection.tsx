@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import useSWR from "swr";
 import { hashString, PALETTES } from "@/lib/utils";
+import CoverImage from "@/components/CoverImage";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -84,8 +85,7 @@ export default function AlbumSection({
                 }}
               >
                 {album.cover_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={album.cover_url} alt={album.name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                  <CoverImage src={album.cover_url} alt={album.name} />
                 ) : (
                   <div
                     className="w-full h-full flex items-center justify-center"

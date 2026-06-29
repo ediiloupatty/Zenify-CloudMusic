@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { hashString, PALETTES } from "@/lib/utils";
+import CoverImage from "@/components/CoverImage";
 
 type Artist = {
   name: string;
@@ -50,8 +51,7 @@ export default function ArtistGrid({
             >
               <div className="relative w-full aspect-square rounded-full overflow-hidden mb-3 shadow-lg group-hover:shadow-xl transition-shadow" style={{ border: "1px solid var(--border-subtle)" }}>
                 {artist.image_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={artist.image_url} alt={artist.name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                  <CoverImage src={artist.image_url} alt={artist.name} />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${c1}, ${c2})` }}>
                     <span className="text-4xl font-black text-white drop-shadow">{artist.name.charAt(0).toUpperCase()}</span>

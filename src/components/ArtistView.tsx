@@ -6,6 +6,7 @@ import type { Album, Artist, Track } from "@/lib/cloudflare";
 import ArtistPlayButton from "@/components/ArtistPlayButton";
 import ArtistPopularList from "@/components/ArtistPopularList";
 import ArtistAlbums from "@/components/ArtistAlbums";
+import CoverImage from "@/components/CoverImage";
 
 type AlbumWithYear = Album & { year?: number };
 
@@ -55,13 +56,7 @@ export default function ArtistView({
       {/* ── Big hero photo (top-right) — swaps to the selected album cover ── */}
       {heroSrc && (
         <div className="absolute top-0 right-0 w-[52%] h-[64%] z-0 pointer-events-none select-none">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            key={heroSrc}
-            src={heroSrc}
-            alt={name}
-            className="w-full h-full object-cover object-top fade-in"
-          />
+          <CoverImage src={heroSrc} alt={name} imageClassName="object-cover object-top fade-in" />
           <div className="absolute inset-0" style={{ background: "linear-gradient(to right, #0d111c 0%, rgba(13,17,28,0) 32%)" }} />
           <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 52%, #0d111c 96%)" }} />
         </div>
@@ -110,8 +105,7 @@ export default function ArtistView({
             {/* Photo label in the centre of the record */}
             <div className="absolute rounded-full overflow-hidden" style={{ inset: "28%" }}>
               {info?.image_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={info.image_url} alt={name} className="w-full h-full object-cover" />
+                <CoverImage src={info.image_url} alt={name} />
               ) : (
                 <div className="w-full h-full flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${c1}, ${c2})` }}>
                   <span className="text-4xl font-black text-white drop-shadow">{name.charAt(0).toUpperCase()}</span>

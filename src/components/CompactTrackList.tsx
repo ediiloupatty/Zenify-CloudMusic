@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Track } from "@/lib/cloudflare";
 import { usePlayer } from "@/context/PlayerContext";
+import CoverImage from "@/components/CoverImage";
 
 export default function CompactTrackList({
   heading,
@@ -46,8 +47,7 @@ export default function CompactTrackList({
               <div className="flex items-center gap-4 min-w-0">
                 <div className="relative w-12 h-12 flex-shrink-0 rounded-lg overflow-hidden shadow-md">
                   {track.cover_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={track.cover_url} alt={track.title} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                    <CoverImage src={track.cover_url} alt={track.title} />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gray-800">
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="white" className="opacity-50">

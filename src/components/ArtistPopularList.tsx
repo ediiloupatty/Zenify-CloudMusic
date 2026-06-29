@@ -7,6 +7,7 @@ import { usePlayer } from "@/context/PlayerContext";
 import { cleanTitle } from "@/lib/cleanTitle";
 import { toggleFavoriteAction } from "@/app/actions/favorites";
 import { hashString, formatDuration, PALETTES } from "@/lib/utils";
+import CoverImage from "@/components/CoverImage";
 
 function Equalizer({ playing }: { playing: boolean }) {
   return (
@@ -102,8 +103,7 @@ export default function ArtistPopularList({
               {/* Cover */}
               <div className="w-11 h-11 rounded-lg overflow-hidden flex-shrink-0 shadow">
                 {track.cover_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={track.cover_url} alt={track.title} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                  <CoverImage src={track.cover_url} alt={track.title} />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${c1}, ${c2})` }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" /></svg>

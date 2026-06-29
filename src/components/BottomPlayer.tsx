@@ -7,6 +7,7 @@ import { usePlayer } from "@/context/PlayerContext";
 import { useToast } from "@/context/ToastContext";
 import QueuePanel from "@/components/QueuePanel";
 import { useCoverColor } from "@/lib/useCoverColor";
+import CoverImage from "@/components/CoverImage";
 import { cleanTitle } from "@/lib/cleanTitle";
 import { formatAudioSpecs } from "@/lib/formatSpecs";
 import { saveDurationAction } from "@/app/admin/actions";
@@ -94,7 +95,7 @@ const MUSIC_ICON_PATHS = [
 
 function LargeCoverArt({ title, category, coverUrl, size = "lg" }: { title: string; category: string; coverUrl?: string; size?: "sm" | "lg" }) {
   if (coverUrl) {
-    return <img src={coverUrl} alt={title} className="w-full h-full object-cover drop-shadow-2xl" />;
+    return <CoverImage src={coverUrl} alt={title} className="drop-shadow-2xl" />;
   }
 
   const palIdx = hashString(title + category) % COVER_PALETTES.length;
@@ -862,6 +863,7 @@ export default function BottomPlayer() {
         ref={audioRef}
         src={audioSrc || undefined}
         crossOrigin="anonymous"
+        preload="metadata"
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onEnded={handleEnded}

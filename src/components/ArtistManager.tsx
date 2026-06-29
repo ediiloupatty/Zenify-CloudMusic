@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import useSWR from "swr";
 import { setArtistImageAction, removeArtistImageAction, setArtistBioAction } from "@/app/admin/actions";
+import CoverImage from "@/components/CoverImage";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -103,8 +104,7 @@ export default function ArtistManager() {
                 <div className="flex items-center gap-3">
                   <div className="relative w-14 h-14 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center" style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}>
                     {ar.image_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={ar.image_url} alt={ar.name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                      <CoverImage src={ar.image_url} alt={ar.name} />
                     ) : (
                       <span className="text-xl font-black text-white">{ar.name.charAt(0).toUpperCase()}</span>
                     )}

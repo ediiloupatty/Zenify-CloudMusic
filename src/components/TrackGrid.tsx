@@ -5,11 +5,11 @@ import { Track } from "@/lib/cloudflare";
 import { usePlayer } from "@/context/PlayerContext";
 import { cleanTitle } from "@/lib/cleanTitle";
 import { hashString, PALETTES, MUSIC_ICON_PATHS } from "@/lib/utils";
+import CoverImage from "@/components/CoverImage";
 
 function Cover({ track, rounded }: { track: Track; rounded: string }) {
   if (track.cover_url) {
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={track.cover_url} alt={track.title} loading="lazy" decoding="async" className={`w-full h-full object-cover ${rounded}`} />;
+    return <CoverImage src={track.cover_url} alt={track.title} className={rounded} />;
   }
   const [c1, c2] = PALETTES[hashString(track.title + track.category) % PALETTES.length];
   const icon = MUSIC_ICON_PATHS[hashString(track.title) % MUSIC_ICON_PATHS.length];
