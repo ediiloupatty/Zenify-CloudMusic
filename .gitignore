@@ -57,3 +57,7 @@ next-env.d.ts
 /desktop/zenify-desktop.exe
 /desktop/*.exe
 /desktop/*.syso
+
+# Ignore markdown files (like CLAUDE.md, AGENTS.md, etc.)
+*.md
+!README.md
