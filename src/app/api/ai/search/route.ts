@@ -122,9 +122,9 @@ GUIDELINES:
       }
     }
 
-    // Validate that returned trackIds actually exist
+    // Validate that returned trackIds actually exist and remove duplicates
     const validIds = new Set(rows.map((t) => t.id));
-    trackIds = trackIds.filter((id) => validIds.has(id));
+    trackIds = Array.from(new Set(trackIds.filter((id) => validIds.has(id))));
 
     return Response.json({ trackIds, message });
   } catch (error) {

@@ -75,20 +75,22 @@ export default function AISearchBar({ allTracks, onFilteredTracks }: AISearchBar
         });
 
         const data = await res.json();
+        const uniqueIds = Array.from(new Set<string>(data.trackIds || []));
 
-        if (data.trackIds && data.trackIds.length > 0) {
-          const idSet = new Set<string>(data.trackIds);
+        if (uniqueIds.length > 0) {
+          const idSet = new Set<string>(uniqueIds);
           // Preserve AI's ordering
-          const ordered = data.trackIds
+          const ordered = uniqueIds
             .map((id: string) => allTracks.find((t) => t.id === id))
             .filter(Boolean) as Track[];
-          // Add any remaining matches not in the AI list
-          const remaining = allTracks.filter(
-            (t) => idSet.has(t.id) && !ordered.find((o) => o.id === t.id)
-          );
+          // Add any remaining local search matches not in the AI list
+          const localResults = fuse.search(q).map((r) => r.item);
+          const remaining = localResults.filter((t) => !idSet.has(t.id));
           onFilteredTracks([...ordered, ...remaining]);
         } else {
-          onFilteredTracks([]);
+          // Fallback to local search if AI returns empty trackIds
+          const localResults = fuse.search(q).map((r) => r.item);
+          onFilteredTracks(localResults);
         }
 
         setAiMessage(data.message || null);
@@ -102,7 +104,7 @@ export default function AISearchBar({ allTracks, onFilteredTracks }: AISearchBar
         setIsAILoading(false);
       }
     },
-    [allTracks, onFilteredTracks, localSearch]
+    [allTracks, onFilteredTracks, localSearch, fuse]
   );
 
   // Handle input change with smart routing
@@ -130,6 +132,8 @@ export default function AISearchBar({ allTracks, onFilteredTracks }: AISearchBar
 
     if (isAIQuery) {
       const aiQuery = trimmed.startsWith("/ai ") ? trimmed.slice(4) : trimmed;
+      // Instant local search while waiting for AI
+      localSearch(trimmed);
       // Debounce AI requests (800ms)
       debounceRef.current = setTimeout(() => aiSearch(aiQuery), 800);
     } else {
