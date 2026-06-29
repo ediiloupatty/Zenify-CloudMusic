@@ -171,7 +171,11 @@ func main() {
 		}
 	}()
 
-	w.Navigate(*url)
+	targetURL := strings.TrimRight(*url, "/")
+	if !strings.HasSuffix(targetURL, "/player") {
+		targetURL += "/player"
+	}
+	w.Navigate(targetURL)
 	w.Run()
 }
 
@@ -279,7 +283,7 @@ func buildActivity(p presence) *dcActivity {
 	// the app is running against a deployed (https) origin.
 	if p.AppURL != "" && p.ID != "" && strings.HasPrefix(p.AppURL, "https://") {
 		act.Buttons = []dcButton{
-			{Label: "Play on Zenify", Url: p.AppURL + "/?play=" + p.ID},
+			{Label: "Play on Zenify", Url: strings.TrimRight(p.AppURL, "/") + "/player?play=" + p.ID},
 		}
 	}
 
