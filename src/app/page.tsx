@@ -8,7 +8,7 @@ export default async function LandingPage() {
   return (
     <div className="min-h-screen font-sans bg-[#1d2230] text-slate-100 overflow-x-hidden selection:bg-[#14b8a6] selection:text-white flex flex-col">
       {/* ─── NAVBAR ────────────────────────────────────────────── */}
-      <header className="w-full px-8 md:px-16 py-8 max-w-7xl mx-auto flex items-center justify-between flex-shrink-0">
+      <header className="w-full px-8 md:px-16 py-8 max-w-[1400px] mx-auto flex items-center justify-between flex-shrink-0">
         <Link href="/" className="flex items-center gap-3 group">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-[#14b8a6] transition-transform group-hover:scale-110">
             <path d="M12 2L12 22" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
@@ -39,7 +39,7 @@ export default async function LandingPage() {
       </header>
 
       {/* ─── HERO SECTION ──────────────────────────────────────── */}
-      <section id="about" className="flex-1 px-8 md:px-16 pt-8 pb-20 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-8 items-center">
+      <section id="about" className="flex-1 px-8 md:px-16 pt-8 pb-20 max-w-[1400px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-12 items-center">
         
         {/* Left Column (Hero Text & Download) */}
         <div className="lg:col-span-5 flex flex-col items-start text-left">
@@ -47,10 +47,10 @@ export default async function LandingPage() {
             A minimal music player for Windows
           </p>
 
-          <h1 className="text-6xl sm:text-7xl lg:text-8xl font-light tracking-tight leading-none text-white mb-2">
+          <h1 className="text-5xl sm:text-6xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-light tracking-tight leading-none text-white mb-2">
             MUSIC,
           </h1>
-          <h1 className="text-6xl sm:text-7xl lg:text-8xl font-light tracking-tight leading-none text-[#14b8a6] mb-8">
+          <h1 className="text-5xl sm:text-6xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-light tracking-tight leading-none text-[#14b8a6] mb-8">
             REIMAGINED.
           </h1>
 
@@ -87,7 +87,7 @@ export default async function LandingPage() {
         </div>
 
         {/* Right Column (Stunning App Mockup) */}
-        <div id="screenshots" className="lg:col-span-7 w-full flex justify-center lg:justify-end">
+        <div id="screenshots" className="lg:col-span-7 w-full flex justify-center lg:justify-end lg:pl-12 xl:pl-16">
           <div className="relative w-full max-w-4xl shadow-[0_30px_80px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden border border-slate-700/50 bg-[#12141d] flex flex-col select-none">
             
             {/* Window Chrome Titlebar */}
@@ -302,12 +302,12 @@ export default async function LandingPage() {
       </section>
 
       {/* ─── DIVIDER ───────────────────────────────────────────── */}
-      <div className="max-w-7xl mx-auto px-8 md:px-16 w-full">
+      <div className="max-w-[1400px] mx-auto px-8 md:px-16 w-full">
         <div className="w-full border-t border-slate-700/50 my-12" />
       </div>
 
       {/* ─── FEATURES GRID ─────────────────────────────────────── */}
-      <section id="features" className="max-w-7xl mx-auto px-8 md:px-16 pb-28 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 w-full">
+      <section id="features" className="max-w-[1400px] mx-auto px-8 md:px-16 pb-28 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 w-full">
         <div className="flex flex-col">
           <span className="text-base font-bold text-[#14b8a6] mb-2 font-mono">01</span>
           <h3 className="text-xl font-bold text-white mb-3 tracking-tight">Minimal Design</h3>
@@ -340,7 +340,7 @@ export default async function LandingPage() {
 
       {/* ─── FOOTER ────────────────────────────────────────────── */}
       <footer className="w-full border-t border-slate-800/80 bg-[#171a26] py-10 px-8 md:px-16 mt-auto">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 font-medium">
+        <div className="max-w-[1400px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 font-medium">
           <div className="flex items-center gap-2">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-[#14b8a6]">
               <path d="M12 2L12 22" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
