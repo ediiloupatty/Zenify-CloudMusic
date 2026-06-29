@@ -40,7 +40,7 @@ export default function ArtistGrid({
         )}
       </div>
 
-      <div className={wrap ? "flex flex-wrap gap-5" : "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-5"}>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-5">
         {shown.map((artist) => {
           const [c1, c2] = PALETTES[hashString(artist.name) % PALETTES.length];
           return (
