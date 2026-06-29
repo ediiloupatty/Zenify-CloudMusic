@@ -304,6 +304,10 @@ export default function BottomPlayer() {
   const tailRef = useRef<HTMLAudioElement>(null);
   const crossfadingRef = useRef(false);   // guards against re-triggering mid-fade
   const fadeInPendingRef = useRef(false);  // incoming track should ramp up on play
+  // While a crossfade is audible, the compact bottom bar keeps showing the
+  // OUTGOING track so the title/cover don't visibly jump ahead of the audio.
+  const [crossfadePrevTrack, setCrossfadePrevTrack] = useState<Track | null>(null);
+  const crossfadeUiTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Linearly ramp a plain element's volume from→to over `seconds`, then onDone.
   const fadeElementVolume = (
@@ -328,6 +332,15 @@ export default function BottomPlayer() {
     if (!audio || !tail) return;
     crossfadingRef.current = true;
     fadeInPendingRef.current = true;
+
+    // Hold the compact bar on the outgoing track for the overlap, then release
+    // it to the (by then dominant) incoming track.
+    setCrossfadePrevTrack(currentTrack);
+    if (crossfadeUiTimerRef.current) clearTimeout(crossfadeUiTimerRef.current);
+    crossfadeUiTimerRef.current = setTimeout(
+      () => setCrossfadePrevTrack(null),
+      CROSSFADE_SEC * 1000,
+    );
 
     // Outgoing tail → secondary element, fading out via element volume.
     try {
@@ -1112,6 +1125,11 @@ export default function BottomPlayer() {
     return null;
   }
 
+  // The track shown in the compact bottom bar. During a crossfade this lags on
+  // the outgoing track so the bar doesn't reveal the ~6s audio overlap; the
+  // fullscreen view and audio engine always use the live currentTrack.
+  const barTrack = crossfadePrevTrack ?? currentTrack;
+
   // Tint the fullscreen player to match the cover (falls back to teal).
   // `cc` is the raw dominant colour (used for the ambient background tint).
   // `accent`/`accentSoft` are a legibility-corrected version used for all text,
@@ -1665,23 +1683,23 @@ export default function BottomPlayer() {
           {/* Left: Track Info */}
           <div className="flex items-center gap-3 md:gap-4 w-full md:w-1/4 xl:w-1/5 order-1">
             <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl overflow-hidden flex-shrink-0 shadow-lg">
-              <LargeCoverArt title={currentTrack.title} category={currentTrack.category} coverUrl={currentTrack.cover_url} size="sm" />
+              <LargeCoverArt title={barTrack.title} category={barTrack.category} coverUrl={barTrack.cover_url} size="sm" />
             </div>
             <div className="flex flex-col overflow-hidden flex-1 min-w-0">
               <div className="font-extrabold text-sm truncate text-white">
-                {cleanTitle(currentTrack.title)}
+                {cleanTitle(barTrack.title)}
               </div>
-              {currentTrack.artist ? (
+              {barTrack.artist ? (
                 <Link
-                  href={`/artist/${encodeURIComponent(currentTrack.artist)}`}
+                  href={`/artist/${encodeURIComponent(barTrack.artist)}`}
                   onClick={(e) => e.stopPropagation()}
                   className="text-xs truncate hover:underline w-fit max-w-full font-medium"
                   style={{ color: "var(--text-muted)" }}
                 >
-                  {currentTrack.artist}
+                  {barTrack.artist}
                 </Link>
               ) : (
-                <div className="text-xs truncate font-medium" style={{ color: "var(--text-muted)" }}>{currentTrack.category}</div>
+                <div className="text-xs truncate font-medium" style={{ color: "var(--text-muted)" }}>{barTrack.category}</div>
               )}
             </div>
             <div className="ml-auto md:hidden flex items-center gap-2">

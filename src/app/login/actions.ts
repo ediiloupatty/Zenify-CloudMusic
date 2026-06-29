@@ -15,7 +15,7 @@ export async function authenticate(
     await signIn("credentials", {
       username,
       password,
-      redirectTo: "/"
+      redirectTo: "/player"
     });
   } catch (error) {
     if (error instanceof AuthError) {
