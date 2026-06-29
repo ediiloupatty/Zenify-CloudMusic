@@ -40,16 +40,14 @@ export default async function LandingPage() {
           </Link>
 
           <nav className="hidden md:flex items-center gap-10 text-sm font-medium text-slate-400">
-            <a href="#about" className="hover:text-white transition-colors">about</a>
             <a href="#features" className="hover:text-white transition-colors">features</a>
-            <a href="#download" className="hover:text-white transition-colors">download</a>
             <a href="https://github.com/ediiloupatty/Zenify" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">github</a>
-            <Link href="/player" className="hover:text-white transition-colors font-semibold text-[#14b8a6]">open player</Link>
+            <Link href="/docs" className="hover:text-white transition-colors font-semibold text-[#14b8a6]">docs</Link>
           </nav>
 
           <div className="flex md:hidden items-center">
-            <Link href="/player" className="text-sm font-bold text-[#14b8a6] hover:underline">
-              Open Player
+            <Link href="/docs" className="text-sm font-bold text-[#14b8a6] hover:underline">
+              Docs
             </Link>
           </div>
         </div>

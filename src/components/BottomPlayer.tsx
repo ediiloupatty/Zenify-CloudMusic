@@ -14,6 +14,16 @@ import { saveDurationAction } from "@/app/admin/actions";
 
 type ParsedLyric = { time: number; text: string };
 
+// Sleep timer: "off", a number of minutes, or "end" (stop after the current track).
+type SleepMode = "off" | "15" | "30" | "45" | "60" | "end";
+const SLEEP_OPTIONS: { value: SleepMode; label: string }[] = [
+  { value: "15", label: "15 minutes" },
+  { value: "30", label: "30 minutes" },
+  { value: "45", label: "45 minutes" },
+  { value: "60", label: "1 hour" },
+  { value: "end", label: "End of track" },
+];
+
 // Lift a dark cover colour so it stays legible as text/accent on the near-black
 // fullscreen UI. Light/mid colours pass through unchanged; very dark ones are
 // scaled up along their own hue, and a pure-black cover falls back to a neutral
@@ -215,6 +225,72 @@ export default function BottomPlayer() {
 
     return () => controller.abort();
   }, [currentTrack?.id, currentTrack?.title, currentTrack?.artist, currentTrack?.lyrics]);
+
+  // ── Sleep timer ────────────────────────────────────────────────────────────
+  const [sleepMode, setSleepMode] = useState<SleepMode>("off");
+  const [sleepLeftMs, setSleepLeftMs] = useState<number | null>(null);
+  const [showSleepMenu, setShowSleepMenu] = useState(false);
+  const sleepMenuRef = useRef<HTMLDivElement>(null);
+  // The "end of track" case is read inside handleEnded, so keep it in a ref to
+  // avoid re-binding the audio element's onEnded handler when the mode changes.
+  const sleepEndOfTrackRef = useRef(false);
+
+  // Pick a sleep option. Seeding the remaining-time here (an event handler,
+  // where setState is allowed) keeps the countdown effect free of a synchronous
+  // setState in its body.
+  const chooseSleep = (value: SleepMode) => {
+    const mins = Number(value);
+    setSleepMode(value);
+    setSleepLeftMs(mins ? mins * 60_000 : null);
+    setShowSleepMenu(false);
+  };
+
+  // Minute-based countdown: tick every second, pause playback when it hits zero.
+  useEffect(() => {
+    sleepEndOfTrackRef.current = sleepMode === "end";
+    const mins = Number(sleepMode); // "off"/"end" → NaN → falsy → no countdown
+    if (!mins) return;
+    const deadline = Date.now() + mins * 60_000;
+    const id = setInterval(() => {
+      const left = deadline - Date.now();
+      if (left <= 0) {
+        clearInterval(id);
+        setSleepLeftMs(null);
+        setSleepMode("off");
+        audioRef.current?.pause();
+        setIsPlaying(false);
+        showToast("Sleep timer ended — playback paused", "info");
+      } else {
+        setSleepLeftMs(left);
+      }
+    }, 1000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sleepMode]);
+
+  // Close the sleep menu on an outside click.
+  useEffect(() => {
+    if (!showSleepMenu) return;
+    const onDown = (e: MouseEvent) => {
+      if (sleepMenuRef.current && !sleepMenuRef.current.contains(e.target as Node)) {
+        setShowSleepMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [showSleepMenu]);
+
+  // ── Share: copy a deep link that auto-plays this track (?play=<id>) ─────────
+  const shareTrack = async () => {
+    if (!currentTrack) return;
+    const url = `${window.location.origin}/player?play=${encodeURIComponent(currentTrack.id)}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      showToast("Link copied to clipboard", "success");
+    } catch {
+      showToast("Couldn't copy link", "error");
+    }
+  };
 
   const parsedLyrics = useMemo(() => {
     const sourceLyrics = externalLyrics || currentTrack?.lyrics;
@@ -557,6 +633,14 @@ export default function BottomPlayer() {
   };
 
   const handleEnded = () => {
+    // Sleep timer set to "end of track": stop here instead of advancing.
+    if (sleepEndOfTrackRef.current) {
+      sleepEndOfTrackRef.current = false;
+      setSleepMode("off");
+      setIsPlaying(false);
+      showToast("Sleep timer ended — playback paused", "info");
+      return;
+    }
     // Repeat-one: restart the same track instead of advancing
     if (repeatMode === "one" && audioRef.current) {
       audioRef.current.currentTime = 0;
@@ -1587,6 +1671,71 @@ export default function BottomPlayer() {
                 {formatAudioSpecs(currentTrack)}
               </span>
             )}
+            {/* Share: copy a deep link to this track */}
+            <button
+              onClick={(e) => { e.stopPropagation(); shareTrack(); }}
+              aria-label="Copy link to this track" title="Copy link"
+              className="transition-colors hover:text-[var(--text-primary)]"
+              style={{ color: "var(--text-muted)" }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z" />
+              </svg>
+            </button>
+
+            {/* Sleep timer */}
+            <div className="relative" ref={sleepMenuRef}>
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowSleepMenu((v) => !v); }}
+                aria-label="Sleep timer" aria-pressed={sleepMode !== "off"}
+                title={sleepMode === "off" ? "Sleep timer" : "Sleep timer on"}
+                className="flex items-center gap-1 transition-colors hover:text-[var(--text-primary)]"
+                style={{ color: sleepMode !== "off" ? accent : "var(--text-muted)" }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.39 5.39 0 0 1-4.4 2.26 5.4 5.4 0 0 1-5.4-5.4c0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z" />
+                </svg>
+                {sleepMode !== "off" && (
+                  <span className="text-[10px] font-mono tabular-nums">
+                    {sleepMode === "end"
+                      ? "track"
+                      : sleepLeftMs != null
+                      ? formatTime(Math.ceil(sleepLeftMs / 1000))
+                      : ""}
+                  </span>
+                )}
+              </button>
+              {showSleepMenu && (
+                <div
+                  className="absolute bottom-full right-0 mb-2 w-44 rounded-xl border p-1.5 shadow-[0_20px_60px_rgba(0,0,0,0.7)] z-50"
+                  style={{ background: "var(--bg-secondary)", borderColor: "var(--border-card)" }}
+                >
+                  <p className="px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
+                    Sleep timer
+                  </p>
+                  {SLEEP_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => chooseSleep(opt.value)}
+                      className="w-full text-left px-2.5 py-1.5 rounded-lg text-sm transition-colors hover:bg-[var(--bg-card-hover)]"
+                      style={{ color: sleepMode === opt.value ? accent : "var(--text-primary)" }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                  {sleepMode !== "off" && (
+                    <button
+                      onClick={() => chooseSleep("off")}
+                      className="w-full text-left px-2.5 py-1.5 rounded-lg text-sm transition-colors hover:bg-[var(--bg-card-hover)]"
+                      style={{ color: "var(--text-muted)" }}
+                    >
+                      Turn off
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
             <button
               onClick={(e) => { e.stopPropagation(); setShowQueue((v) => !v); }}
               aria-label="Queue"
