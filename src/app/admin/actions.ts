@@ -9,10 +9,10 @@ function revalidateAll(customPath?: string) {
   revalidatePath("/");
   revalidatePath("/admin");
   if (customPath) revalidatePath(customPath);
-  revalidateTag("tracks");
-  revalidateTag("albums");
-  revalidateTag("artists");
-  revalidateTag("playlists");
+  revalidateTag("tracks", "max");
+  revalidateTag("albums", "max");
+  revalidateTag("artists", "max");
+  revalidateTag("playlists", "max");
 }
 import sharp from "sharp";
 import { cleanTitle } from "@/lib/cleanTitle";
