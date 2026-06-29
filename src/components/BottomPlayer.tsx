@@ -438,9 +438,8 @@ export default function BottomPlayer() {
       audioContextRef.current = ctx;
       
       const analyser = ctx.createAnalyser();
-      // 128 → 64 frequency bins; halving fftSize cuts analyser CPU work in half
-      // with no perceptible difference for the bar visualiser.
-      analyser.fftSize = 128;
+      // Restore fftSize 256 (128 frequency bins) for rich, dense, high-fidelity visualizer bars
+      analyser.fftSize = 256;
       analyser.smoothingTimeConstant = 0.82;
       analyserRef.current = analyser;
 
@@ -814,10 +813,9 @@ export default function BottomPlayer() {
     let ar = 45, ag = 212, ab = 191; // fallback teal
     if (coverColor) { ar = coverColor.r; ag = coverColor.g; ab = coverColor.b; }
 
-    // Allocate the frequency buffer ONCE and reuse each frame to avoid creating
-    // a new Uint8Array at 60 fps (which triggers garbage collection and stutters).
-    const bufferLength = analyserRef.current?.frequencyBinCount ?? 64;
-    const dataArray = new Uint8Array(bufferLength);
+    // Maintain a persistent buffer to avoid GC pressure, dynamically resizing
+    // only if the analyser's frequencyBinCount changes (e.g. 128 bins for fftSize 256).
+    let dataArray = new Uint8Array(128);
 
     let animationFrame: number;
     let backoffId: ReturnType<typeof setTimeout> | null = null;
@@ -841,6 +839,11 @@ export default function BottomPlayer() {
       if (!analyserRef.current || !canvasRef.current) { scheduleNext(); return; }
 
       const analyser = analyserRef.current;
+      const bufferLength = analyser.frequencyBinCount;
+      if (dataArray.length !== bufferLength) {
+        dataArray = new Uint8Array(bufferLength);
+      }
+
       // Reuse the pre-allocated buffer — no GC pressure
       analyser.getByteFrequencyData(dataArray);
 
@@ -895,7 +898,7 @@ export default function BottomPlayer() {
       if (backoffId !== null) clearTimeout(backoffId);
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
-  }, [isExpanded, coverColor, isPlaying]);
+  }, [isExpanded, coverColor, isPlaying, duration, progress]);
 
   const rawUrl = currentTrack?.file_url || "";
   const audioSrc = rawUrl.includes(".r2.dev/")
