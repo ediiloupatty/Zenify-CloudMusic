@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { auth } from "@/auth";
 
 export default async function LandingPage() {
@@ -6,9 +7,24 @@ export default async function LandingPage() {
   const isLoggedIn = !!session?.user;
 
   return (
-    <div className="min-h-screen font-sans bg-[#1d2230] text-slate-100 selection:bg-[#14b8a6] selection:text-white flex flex-col">
+    <div className="min-h-screen font-sans bg-[#1d2230] text-slate-100 selection:bg-[#14b8a6] selection:text-white flex flex-col relative overflow-hidden">
+      
+      {/* ─── BACKGROUND IMAGE WITH BLUR EFFECT ────────────────── */}
+      <div className="absolute inset-0 w-full h-full pointer-events-none select-none z-0 overflow-hidden">
+        <Image
+          src="/background.webp"
+          alt="Zenify Background"
+          fill
+          priority
+          quality={85}
+          className="object-cover object-center opacity-40 filter blur-[25px] scale-110 transform"
+        />
+        {/* Subtle overlay gradient to ensure text readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#1d2230]/75 via-[#1d2230]/60 to-[#171a26]/95" />
+      </div>
+
       {/* ─── NAVBAR (Fixed & Bulletproof) ──────────────────────── */}
-      <header className="fixed top-0 left-0 right-0 z-50 w-full px-8 md:px-16 py-6 bg-[#1d2230]/90 backdrop-blur-md border-b border-slate-800/80 transition-all">
+      <header className="fixed top-0 left-0 right-0 z-50 w-full px-8 md:px-16 py-6 bg-[#1d2230]/85 backdrop-blur-md border-b border-slate-800/80 transition-all">
         <div className="max-w-[1400px] mx-auto flex items-center justify-between w-full">
           <Link href="/" className="flex items-center gap-3 group">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-[#14b8a6] transition-transform group-hover:scale-110">
@@ -40,7 +56,7 @@ export default async function LandingPage() {
       </header>
 
       {/* ─── HERO SECTION ──────────────────────────────────────── */}
-      <section id="about" className="flex-1 px-8 md:px-16 pt-36 pb-24 max-w-[1400px] mx-auto w-full flex flex-col items-start justify-center text-left">
+      <section id="about" className="relative z-10 flex-1 px-8 md:px-16 pt-36 pb-24 max-w-[1400px] mx-auto w-full flex flex-col items-start justify-center text-left">
         <p className="text-sm font-semibold text-slate-400 mb-6 tracking-wide uppercase">
           A minimal music player for Windows
         </p>
@@ -85,12 +101,12 @@ export default async function LandingPage() {
       </section>
 
       {/* ─── DIVIDER ───────────────────────────────────────────── */}
-      <div className="max-w-[1400px] mx-auto px-8 md:px-16 w-full">
+      <div className="relative z-10 max-w-[1400px] mx-auto px-8 md:px-16 w-full">
         <div className="w-full border-t border-slate-700/50 my-12" />
       </div>
 
       {/* ─── FEATURES GRID ─────────────────────────────────────── */}
-      <section id="features" className="max-w-[1400px] mx-auto px-8 md:px-16 pb-28 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 w-full">
+      <section id="features" className="relative z-10 max-w-[1400px] mx-auto px-8 md:px-16 pb-28 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 w-full">
         <div className="flex flex-col">
           <span className="text-base font-bold text-[#14b8a6] mb-2 font-mono">01</span>
           <h3 className="text-xl font-bold text-white mb-3 tracking-tight">Minimal Design</h3>
@@ -122,7 +138,7 @@ export default async function LandingPage() {
       </section>
 
       {/* ─── FOOTER ────────────────────────────────────────────── */}
-      <footer className="w-full border-t border-slate-800/80 bg-[#171a26] py-10 px-8 md:px-16 mt-auto">
+      <footer className="relative z-10 w-full border-t border-slate-800/80 bg-[#171a26]/90 py-10 px-8 md:px-16 mt-auto">
         <div className="max-w-[1400px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 font-medium">
           <div className="flex items-center gap-2">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-[#14b8a6]">
