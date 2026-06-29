@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Zenify
+
+Zenify is a modern, full-stack music streaming platform designed to provide a seamless audio experience across web and desktop environments. Built with a focus on performance, aesthetics, and user experience.
+
+## Architecture & Tech Stack
+
+- **Web Framework:** Next.js 16 (App Router) & React 19
+- **Styling:** Tailwind CSS v4
+- **Authentication:** NextAuth.js for secure user sessions
+- **Storage:** AWS S3 integration for robust media management
+- **Search:** Fuse.js for fast client-side fuzzy searching
+- **Desktop Client:** Dedicated desktop wrapper built with Go (`/desktop`)
+- **Uploader Utility:** Go-based tool for uploading and managing audio files (`/uploader`)
+
+## Key Features
+
+- Seamless audio playback with queue management (Bottom Player)
+- Artist profiles, album views, and custom playlist creation
+- Responsive and modern UI design tailored for any device
+- Integrated native desktop experience
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Node.js (v20 or higher)
+- Go (for desktop client and uploader)
+- AWS S3 or compatible storage credentials
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Installation & Setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2. **Environment Configuration:**
+   Configure your environment variables in the `.env` file (NextAuth secrets, AWS credentials, etc.).
 
-## Learn More
+3. **Run the Development Server:**
+   ```bash
+   npm run dev
+   ```
+   The application will be available at `http://localhost:3000`.
 
-To learn more about Next.js, take a look at the following resources:
+## Repository Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `/src` - Next.js web application (pages, components, utilities)
+- `/desktop` - Go source code for the native desktop client
+- `/uploader` - Go utility for processing and uploading media
+- `/scripts` - Development scripts and mock generators
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Disclaimer / Usage
 
-## Deploy on Vercel
+**This project is built strictly for personal use.** It is not intended for commercial distribution, monetization, or public sale.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+*Credit: Created with claude opus 4.8 max and gemini 3.1 Pro (high)*
