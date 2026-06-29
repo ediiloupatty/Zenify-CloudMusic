@@ -127,12 +127,12 @@ export default function QueuePanel({
   return (
     <>
       {/* Click-away backdrop */}
-      <div className="fixed inset-x-0 bottom-0 top-[76px] md:top-[88px] z-40 bg-black/30 queue-backdrop-in" onClick={onClose} />
+      <div className="fixed inset-x-0 bottom-0 top-[100px] md:top-[120px] z-40 bg-black/30 queue-backdrop-in" onClick={onClose} />
 
       <aside
         role="dialog"
         aria-label="Play queue"
-        className="fixed right-0 top-[76px] md:top-[88px] bottom-24 w-[360px] max-w-[88vw] z-[45] flex flex-col queue-slide-in shadow-2xl"
+        className="fixed right-0 top-[100px] md:top-[120px] bottom-24 w-[360px] max-w-[88vw] z-[45] flex flex-col queue-slide-in shadow-2xl"
         style={{
           background: `linear-gradient(180deg, rgba(${coverColor.r}, ${coverColor.g}, ${coverColor.b}, 0.12) 0%, rgba(${coverColor.r}, ${coverColor.g}, ${coverColor.b}, 0.02) 100%), var(--bg-secondary)`,
           borderLeft: `1px solid ${accentSoft}`

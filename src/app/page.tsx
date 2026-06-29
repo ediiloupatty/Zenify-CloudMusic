@@ -53,7 +53,7 @@ export default async function Home({
       <Sidebar currentCategory={currentCategory} />
 
       {/* ─── MAIN AREA ────────────────────────────────────────────── */}
-      <div className="relative z-10 flex-1 flex flex-col overflow-hidden">
+      <div className="relative z-50 flex-1 flex flex-col overflow-hidden">
 
         {/* TOP BAR */}
         <header
