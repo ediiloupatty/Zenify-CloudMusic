@@ -144,11 +144,11 @@ export default function HomeContent({
     const recentBase = recentlyPlayed.length ? recentlyPlayed : tracks;
     const recentList = recentBase.filter((t) => t.id !== featured?.id).slice(0, 5);
 
-    // "New Releases" when we actually have fresh tracks; otherwise a generic
+    // "Recently Added" when we actually have fresh tracks; otherwise a generic
     // slice of the library (kept titled "Songs" so the heading stays honest).
     const hasNew = newTracks.length > 0;
     const songs = (hasNew ? newTracks : tracks).slice(0, 7);
-    const songsHeading = hasNew ? "New Releases" : "Songs";
+    const songsHeading = hasNew ? "Recently Added" : "Songs";
 
     const isFeaturedPlaying =
       !!featured && !!playerCurrent && playerCurrent.id === featured.id && isPlaying;
