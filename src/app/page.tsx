@@ -60,7 +60,7 @@ export default async function Home({
         <header
           className="flex items-center justify-between px-4 md:px-8 pt-5 md:pt-7 pb-4 md:pb-5 flex-shrink-0 gap-3 backdrop-blur-xl transition-all duration-500 z-50"
           style={{
-            background: "rgba(43, 51, 63, 0.4)",
+            background: "transparent",
             backdropFilter: "blur(24px)",
             WebkitBackdropFilter: "blur(24px)",
             borderBottom: "1px solid var(--border-subtle)",

@@ -169,6 +169,7 @@ interface PlayerContextType {
   // Upcoming tracks in play order (after the current one). `index` is the index
   // into `tracks`, so a UI can jump straight there via setCurrentTrackIndex.
   upcoming: { track: Track; index: number }[];
+  reorderUpcoming: (fromUpcomingIndex: number, toUpcomingIndex: number) => void;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -329,6 +330,18 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     setPosition(pos);
   };
 
+  const reorderUpcoming = (fromIndex: number, toIndex: number) => {
+    if (fromIndex < 0 || toIndex < 0) return;
+    const pastAndCurrent = playOrder.slice(0, position + 1);
+    const upcomingIds = playOrder.slice(position + 1);
+    if (fromIndex >= upcomingIds.length || toIndex >= upcomingIds.length) return;
+
+    const [moved] = upcomingIds.splice(fromIndex, 1);
+    upcomingIds.splice(toIndex, 0, moved);
+
+    setPlayOrder([...pastAndCurrent, ...upcomingIds]);
+  };
+
   return (
     <PlayerContext.Provider
       value={{
@@ -347,6 +360,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         showQueue,
         setShowQueue,
         upcoming,
+        reorderUpcoming,
       }}
     >
       {children}

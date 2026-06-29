@@ -116,10 +116,13 @@ export default function QueuePanel({
   accentSoft?: string; 
   coverColor?: { r: number; g: number; b: number }; 
 }) {
-  const { tracks, currentTrackIndex, upcoming, setCurrentTrackIndex } = usePlayer();
+  const { tracks, currentTrackIndex, upcoming, setCurrentTrackIndex, reorderUpcoming } = usePlayer();
   const current = tracks[currentTrackIndex];
 
   const [desktopOffset, setDesktopOffset] = useState(0);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [activeDragHandle, setActiveDragHandle] = useState<number | null>(null);
   useEffect(() => {
     if ((window as { __ZENIFY_DESKTOP__?: boolean }).__ZENIFY_DESKTOP__) setDesktopOffset(32);
   }, []);
@@ -242,36 +245,103 @@ export default function QueuePanel({
             ) : (
               <div className="flex flex-col gap-0.5">
                 {upcoming.map((u, i) => (
-                  <button
+                  <div
                     key={`${u.index}-${i}`}
-                    onClick={() => setCurrentTrackIndex(u.index)}
-                    className="group queue-item-in flex items-center gap-3 p-2 rounded-xl text-left transition-colors hover:bg-[var(--bg-card-hover)]"
+                    draggable={activeDragHandle === i}
+                    onDragStart={(e) => {
+                      e.stopPropagation();
+                      e.dataTransfer.effectAllowed = "move";
+                      e.dataTransfer.setData("text/plain", i.toString());
+                      setDraggedIndex(i);
+                    }}
+                    onDragEnter={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setDragOverIndex(i);
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      e.dataTransfer.dropEffect = "move";
+                      setDragOverIndex(i);
+                    }}
+                    onDragLeave={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setDragOverIndex(null);
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const fromIdx = draggedIndex !== null ? draggedIndex : parseInt(e.dataTransfer.getData("text/plain"), 10);
+                      if (fromIdx !== null && !isNaN(fromIdx) && fromIdx !== i) {
+                        reorderUpcoming(fromIdx, i);
+                      }
+                      setDraggedIndex(null);
+                      setDragOverIndex(null);
+                      setActiveDragHandle(null);
+                    }}
+                    onDragEnd={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setDraggedIndex(null);
+                      setDragOverIndex(null);
+                      setActiveDragHandle(null);
+                    }}
+                    className={`group queue-item-in flex items-center gap-3 p-2 rounded-xl text-left transition-all hover:bg-[var(--bg-card-hover)] ${
+                      dragOverIndex === i ? "border-t-2 border-[var(--accent)] bg-[var(--bg-card)]" : ""
+                    } ${draggedIndex === i ? "opacity-50" : ""}`}
                     style={{ animationDelay: `${0.08 + Math.min(i, 8) * 0.04}s` }}
                   >
-                    {/* Track number */}
-                    <span
-                      className="w-5 text-center text-[11px] font-semibold flex-shrink-0 tabular-nums"
-                      style={{ color: "var(--text-secondary)" }}
+                    {/* Clickable track info */}
+                    <div 
+                      className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
+                      onClick={() => setCurrentTrackIndex(u.index)}
+                      title="Play track"
                     >
-                      {i + 1}
-                    </span>
-                    <div className="w-10 h-10 rounded-md overflow-hidden flex-shrink-0">
-                      <MiniCover track={u.track} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-sm truncate group-hover:text-[var(--accent)] transition-colors" style={{ color: "var(--text-primary)" }}>
-                        {cleanTitle(u.track.title)}
-                      </p>
-                      <p className="text-xs truncate" style={{ color: "var(--text-secondary)" }}>
-                        {u.track.artist || u.track.category}
-                      </p>
-                    </div>
-                    {u.track.duration && (
-                      <span className="text-[10px] font-medium flex-shrink-0 tabular-nums" style={{ color: "var(--text-secondary)" }}>
-                        {formatDuration(u.track.duration)}
+                      <span
+                        className="w-5 text-center text-[11px] font-semibold flex-shrink-0 tabular-nums group-hover:text-[var(--accent)] transition-colors"
+                        style={{ color: "var(--text-secondary)" }}
+                      >
+                        {i + 1}
                       </span>
-                    )}
-                  </button>
+                      <div className="w-10 h-10 rounded-md overflow-hidden flex-shrink-0">
+                        <MiniCover track={u.track} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-sm truncate group-hover:text-[var(--accent)] transition-colors" style={{ color: "var(--text-primary)" }}>
+                          {cleanTitle(u.track.title)}
+                        </p>
+                        <p className="text-xs truncate" style={{ color: "var(--text-secondary)" }}>
+                          {u.track.artist || u.track.category}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      {u.track.duration && (
+                        <span className="text-[10px] font-medium tabular-nums" style={{ color: "var(--text-secondary)" }}>
+                          {formatDuration(u.track.duration)}
+                        </span>
+                      )}
+                      <div 
+                        className="w-6 h-6 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing" 
+                        style={{ color: "var(--text-muted)", background: "var(--bg-card)" }}
+                        title="Drag to reorder"
+                        onMouseEnter={() => setActiveDragHandle(i)}
+                        onMouseLeave={() => setActiveDragHandle(null)}
+                        onTouchStart={() => setActiveDragHandle(i)}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="9" cy="12" r="1" />
+                          <circle cx="9" cy="5" r="1" />
+                          <circle cx="9" cy="19" r="1" />
+                          <circle cx="15" cy="12" r="1" />
+                          <circle cx="15" cy="5" r="1" />
+                          <circle cx="15" cy="19" r="1" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
