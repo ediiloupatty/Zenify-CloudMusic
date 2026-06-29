@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { r2Client } from "@/lib/cloudflare";
 
 /** Map file extensions to MIME types so the browser always knows the format. */
@@ -20,9 +21,20 @@ function mimeFromKey(key: string): string {
   return MIME[key.slice(dot).toLowerCase()] || "application/octet-stream";
 }
 
-// Proxy-stream from R2 instead of redirecting. This avoids CORS issues
-// (crossOrigin="anonymous" on <audio>), guarantees the correct Content-Type,
-// and supports Range requests for seeking.
+// Redirect to a signed R2 URL so the BROWSER fetches the audio bytes directly
+// from R2 (the *.r2.cloudflarestorage.com endpoint, which the ISP doesn't block),
+// instead of proxy-streaming every byte through this function. Proxying the full
+// 30-100MB FLAC/WAV through the server was burning the host's origin/data
+// transfer quota on every play; a redirect sends only a tiny 302 through us and
+// lets R2 (free egress) serve the heavy bytes + handle Range requests natively.
+//
+// Two things the old proxy gave us for free that we preserve here:
+//   1. Correct Content-Type — forced via ResponseContentType on the presigned
+//      URL, independent of the object's stored metadata.
+//   2. CORS-clean playback — REQUIRED because <audio crossOrigin="anonymous">
+//      feeds Web Audio (createMediaElementSource). The R2 bucket MUST have a
+//      CORS policy allowing this app's origin, or the redirected response is
+//      tainted and the audio graph (equalizer/visualizer) outputs silence.
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ filename: string[] }> }
@@ -44,71 +56,29 @@ export async function GET(
   }
 
   try {
-    const rawRange = request.headers.get("range");
-    const isFullAudio = request.headers.get("x-full-audio") === "1";
-
-    // Force initial chunking (1MB) if the browser requests the entire file or omits Range.
-    // This prevents downloading the entire 30MB-100MB FLAC/WAV file before playback begins,
-    // ensuring lightning-fast Time-To-First-Byte (TTFB) and instant audio playback.
-    // If X-Full-Audio is present, bypass chunking so the Service Worker can cache the full file.
-    let rangeParam = rawRange;
-    if (!isFullAudio && (!rawRange || rawRange === "bytes=0-")) {
-      rangeParam = "bytes=0-1048575"; // 1MB initial chunk
-    } else if (isFullAudio) {
-      rangeParam = null;
-    }
-
     const command = new GetObjectCommand({
       Bucket: bucketName,
       Key: key,
-      ...(rangeParam ? { Range: rangeParam } : {}),
+      // Override the response so the browser always sees the right MIME and can
+      // cache the bytes long-term, regardless of how the object was uploaded.
+      ResponseContentType: mimeFromKey(key),
+      ResponseCacheControl: "public, max-age=31536000, immutable",
     });
+    const url = await getSignedUrl(r2Client, command, { expiresIn: 3600 });
 
-    const response = await r2Client.send(command);
-    const contentType = mimeFromKey(key);
-    const body = response.Body;
-
-    if (!body) {
-      return new NextResponse("Not Found", { status: 404 });
-    }
-
-    // Convert the SDK readable stream to a web ReadableStream
-    const webStream = body.transformToWebStream();
-
-    // Range response (206)
-    if (rangeParam && response.ContentRange) {
-      return new NextResponse(webStream, {
-        status: 206,
-        headers: {
-          "Content-Type": contentType,
-          "Content-Range": response.ContentRange,
-          "Accept-Ranges": "bytes",
-          ...(response.ContentLength != null
-            ? { "Content-Length": String(response.ContentLength) }
-            : {}),
-          "Cache-Control": "private, max-age=3600",
-        },
-      });
-    }
-
-    // Full response (200)
-    return new NextResponse(webStream, {
-      status: 200,
-      headers: {
-        "Content-Type": contentType,
-        "Accept-Ranges": "bytes",
-        ...(response.ContentLength != null
-          ? { "Content-Length": String(response.ContentLength) }
-          : {}),
-        "Cache-Control": "private, max-age=3600",
-      },
+    // The browser follows this 302 and re-issues its Range request directly to
+    // R2, so seeking still works. Cache the redirect itself only briefly (well
+    // under the 3600s presign expiry) so we don't hand out stale signed URLs.
+    return NextResponse.redirect(url, {
+      status: 302,
+      headers: { "Cache-Control": "public, max-age=600" },
     });
   } catch (error: unknown) {
     const name = error instanceof Error ? error.name : "";
     if (name === "NoSuchKey") {
       return new NextResponse("Not Found", { status: 404 });
     }
-    console.error("Error streaming audio from R2:", error);
+    console.error("Error generating signed audio URL from R2:", error);
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
