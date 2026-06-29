@@ -14,6 +14,9 @@ import { saveDurationAction } from "@/app/admin/actions";
 
 type ParsedLyric = { time: number; text: string };
 
+// Crossfade overlap (seconds) between the outgoing and incoming track. Always on.
+const CROSSFADE_SEC = 6;
+
 // Sleep timer: "off", a number of minutes, or "end" (stop after the current track).
 type SleepMode = "off" | "15" | "30" | "45" | "60" | "end";
 const SLEEP_OPTIONS: { value: SleepMode; label: string }[] = [
@@ -289,6 +292,81 @@ export default function BottomPlayer() {
       showToast("Link copied to clipboard", "success");
     } catch {
       showToast("Couldn't copy link", "error");
+    }
+  };
+
+  // ── Crossfade ───────────────────────────────────────────────────────────────
+  // The primary element (audioRef) always holds the CURRENT track, so lyrics /
+  // visualizer / MediaSession follow the incoming song for free. The outgoing
+  // track's tail is handed to a plain secondary element (tailRef) and faded out
+  // via its own .volume, while the incoming track fades IN through the Web Audio
+  // gain node — giving a real overlap without rewiring the single-source graph.
+  const tailRef = useRef<HTMLAudioElement>(null);
+  const crossfadingRef = useRef(false);   // guards against re-triggering mid-fade
+  const fadeInPendingRef = useRef(false);  // incoming track should ramp up on play
+
+  // Linearly ramp a plain element's volume from→to over `seconds`, then onDone.
+  const fadeElementVolume = (
+    el: HTMLAudioElement,
+    from: number,
+    to: number,
+    seconds: number,
+    onDone?: () => void,
+  ) => {
+    const steps = Math.max(1, Math.round(seconds * 30));
+    let i = 0;
+    const id = setInterval(() => {
+      i++;
+      el.volume = Math.min(1, Math.max(0, from + (to - from) * (i / steps)));
+      if (i >= steps) { clearInterval(id); onDone?.(); }
+    }, (seconds * 1000) / steps);
+  };
+
+  const startCrossfade = () => {
+    const audio = audioRef.current;
+    const tail = tailRef.current;
+    if (!audio || !tail) return;
+    crossfadingRef.current = true;
+    fadeInPendingRef.current = true;
+
+    // Outgoing tail → secondary element, fading out via element volume.
+    try {
+      tail.src = audio.currentSrc || audio.src;
+      tail.currentTime = audio.currentTime;
+      tail.volume = volume;
+      tail.play().catch(() => {});
+      fadeElementVolume(tail, volume, 0, CROSSFADE_SEC, () => { try { tail.pause(); } catch {} });
+    } catch {}
+
+    // Pre-silence the primary; the incoming ramp begins on its 'playing' event
+    // (handlePlaying) so the fade-in lines up with where the audio actually starts.
+    const ctx = audioContextRef.current;
+    if (gainNodeRef.current && ctx) {
+      gainNodeRef.current.gain.cancelScheduledValues(ctx.currentTime);
+      gainNodeRef.current.gain.setValueAtTime(0.0001, ctx.currentTime);
+    } else {
+      audio.volume = 0;
+    }
+
+    playNextTrack();
+  };
+
+  // Fired when the (new) primary track actually begins playing. If we're mid
+  // crossfade, ramp it up from silence; otherwise leave normal playback alone.
+  const handlePlaying = () => {
+    if (!fadeInPendingRef.current) return;
+    fadeInPendingRef.current = false;
+    const ctx = audioContextRef.current;
+    const audio = audioRef.current;
+    if (gainNodeRef.current && ctx) {
+      const g = gainNodeRef.current.gain;
+      const t0 = ctx.currentTime;
+      g.cancelScheduledValues(t0);
+      g.setValueAtTime(0.0001, t0);
+      g.linearRampToValueAtTime(Math.max(0.0001, volume), t0 + CROSSFADE_SEC);
+    } else if (audio) {
+      audio.volume = 0;
+      fadeElementVolume(audio, 0, volume, CROSSFADE_SEC);
     }
   };
 
@@ -570,6 +648,23 @@ export default function BottomPlayer() {
       setProgress(audioRef.current.currentTime);
       setDuration(audioRef.current.duration || 0);
 
+      // Crossfade into the next track during the final CROSSFADE_SEC seconds.
+      // Skipped for repeat-one (would fade into itself), when a sleep "end of
+      // track" stop is pending, at the end of the queue (no next), and for
+      // tracks too short to overlap cleanly.
+      const d = audioRef.current.duration;
+      if (
+        isPlaying &&
+        !crossfadingRef.current &&
+        repeatMode !== "one" &&
+        !sleepEndOfTrackRef.current &&
+        upcoming[0]?.track &&
+        Number.isFinite(d) && d > CROSSFADE_SEC + 1 &&
+        audioRef.current.currentTime >= d - CROSSFADE_SEC
+      ) {
+        startCrossfade();
+      }
+
       const now = Date.now();
       if (currentTrack && now - lastPosSaveRef.current > 2000) {
         lastPosSaveRef.current = now;
@@ -602,6 +697,17 @@ export default function BottomPlayer() {
   const handleLoadedMetadata = () => {
     const audio = audioRef.current;
     if (!audio || !currentTrack) return;
+
+    // A new track is loaded — clear the crossfade guard so it can fade again
+    // near this track's end. On a NORMAL (non-crossfade) load, snap the gain
+    // back to full so a manually-selected track isn't stuck mid-fade.
+    crossfadingRef.current = false;
+    const ctxLm = audioContextRef.current;
+    if (gainNodeRef.current && ctxLm && !fadeInPendingRef.current) {
+      gainNodeRef.current.gain.cancelScheduledValues(ctxLm.currentTime);
+      gainNodeRef.current.gain.setValueAtTime(volume, ctxLm.currentTime);
+    }
+
     const d = audio.duration;
     if (Number.isFinite(d) && d > 0 && !currentTrack.duration && !backfilledRef.current.has(currentTrack.id)) {
       backfilledRef.current.add(currentTrack.id);
@@ -1041,8 +1147,16 @@ export default function BottomPlayer() {
         preload="auto"
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
+        onPlaying={handlePlaying}
         onEnded={handleEnded}
         onError={handleAudioError}
+        controlsList="nodownload"
+      />
+      {/* Outgoing-track tail player for crossfade (faded out via its own volume). */}
+      <audio
+        ref={tailRef}
+        crossOrigin="anonymous"
+        preload="auto"
         controlsList="nodownload"
       />
       {nextAudioSrc && (
