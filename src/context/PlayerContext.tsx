@@ -280,152 +280,95 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
   const playTrack = useCallback((newTracks: Track[], startIndex: number) => {
     setTracks(newTracks);
-    setShuffle((shuf) => {
-      if (shuf) {
-        setPlayOrder(buildVibeOrder(newTracks, startIndex));
-        setPosition(0);
-      } else {
-        setPlayOrder(identityOrder(newTracks.length));
-        setPosition(startIndex);
-      }
-      return shuf;
-    });
+    if (shuffle) {
+      setPlayOrder(buildVibeOrder(newTracks, startIndex));
+      setPosition(0);
+    } else {
+      setPlayOrder(identityOrder(newTracks.length));
+      setPosition(startIndex);
+    }
     setHistory([]);
     setIsPlaying(true);
-  }, []);
+  }, [shuffle]);
 
   // `auto` = triggered by a track ending (vs the user clicking next). When a
   // track ends with repeat off and we're at the end of the order, playback
   // stops. (Repeat-one is handled in BottomPlayer and never reaches here.)
   const playNextTrack = useCallback((auto = false) => {
-    setTracks((curTracks) => {
-      if (curTracks.length === 0) return curTracks;
-      setPlayOrder((curOrder) => {
-        setPosition((curPos) => {
-          setRepeatMode((curRepeat) => {
-            setShuffle((curShuffle) => {
-              const atEnd = curPos >= curOrder.length - 1;
-              if (atEnd) {
-                if (auto && curRepeat === "off") {
-                  setIsPlaying(false);
-                  return curShuffle;
-                }
-                if (curShuffle) {
-                  const curIdx = curOrder[curPos] ?? 0;
-                  const fresh = buildVibeOrder(curTracks, curIdx);
-                  setPlayOrder(fresh);
-                  setPosition(fresh.length > 1 ? 1 : 0);
-                } else {
-                  setPosition(0);
-                }
-                setHistory((h) => [...h, curPos].slice(-HISTORY_LIMIT));
-                setIsPlaying(true);
-              } else {
-                setHistory((h) => [...h, curPos].slice(-HISTORY_LIMIT));
-                setPosition(curPos + 1);
-                setIsPlaying(true);
-              }
-              return curShuffle;
-            });
-            return curRepeat;
-          });
-          return curPos; // actual update done inside
-        });
-        return curOrder; // actual update done inside
-      });
-      return curTracks;
-    });
-  }, []);
+    if (tracks.length === 0) return;
+    const atEnd = position >= playOrder.length - 1;
+    if (atEnd) {
+      if (auto && repeatMode === "off") {
+        setIsPlaying(false);
+        return;
+      }
+      if (shuffle) {
+        const curIdx = playOrder[position] ?? 0;
+        const fresh = buildVibeOrder(tracks, curIdx);
+        setPlayOrder(fresh);
+        setPosition(fresh.length > 1 ? 1 : 0);
+      } else {
+        setPosition(0);
+      }
+      setHistory((h) => [...h, position].slice(-HISTORY_LIMIT));
+      setIsPlaying(true);
+    } else {
+      setHistory((h) => [...h, position].slice(-HISTORY_LIMIT));
+      setPosition(position + 1);
+      setIsPlaying(true);
+    }
+  }, [tracks, playOrder, position, repeatMode, shuffle]);
 
   const playPrevTrack = useCallback(() => {
-    setTracks((curTracks) => {
-      if (curTracks.length === 0) return curTracks;
-      setHistory((curHistory) => {
-        if (curHistory.length > 0) {
-          setPosition(curHistory[curHistory.length - 1]);
-          return curHistory.slice(0, -1);
-        } else {
-          setPlayOrder((curOrder) => {
-            setPosition((curPos) => (curPos - 1 + curOrder.length) % curOrder.length);
-            return curOrder;
-          });
-          return curHistory;
-        }
-      });
-      setIsPlaying(true);
-      return curTracks;
-    });
-  }, []);
+    if (tracks.length === 0) return;
+    if (history.length > 0) {
+      const prevPos = history[history.length - 1];
+      setPosition(prevPos);
+      setHistory(history.slice(0, -1));
+    } else {
+      setPosition((position - 1 + playOrder.length) % playOrder.length);
+    }
+    setIsPlaying(true);
+  }, [tracks, playOrder, position, history]);
 
   const toggleRepeat = useCallback(() => {
     setRepeatMode((prev) => (prev === "off" ? "all" : prev === "all" ? "one" : "off"));
   }, []);
 
   const toggleShuffle = useCallback(() => {
-    setShuffle((prev) => {
-      const turningOn = !prev;
-      if (turningOn) {
-        setTracks((curTracks) => {
-          setPlayOrder((curOrder) => {
-            setPosition((curPos) => {
-              const curIdx = curOrder[curPos] ?? 0;
-              const newOrder = buildVibeOrder(curTracks, curIdx);
-              setPlayOrder(newOrder);
-              setPosition(0);
-              return curPos;
-            });
-            return curOrder;
-          });
-          return curTracks;
-        });
-      } else {
-        setTracks((curTracks) => {
-          setPlayOrder((curOrder) => {
-            setPosition((curPos) => {
-              const curIdx = curOrder[curPos] ?? 0;
-              setPlayOrder(identityOrder(curTracks.length));
-              setPosition(curIdx);
-              return curPos;
-            });
-            return curOrder;
-          });
-          return curTracks;
-        });
-      }
-      setHistory([]);
-      return turningOn;
-    });
-  }, []);
+    const turningOn = !shuffle;
+    if (turningOn) {
+      const curIdx = playOrder[position] ?? 0;
+      const newOrder = buildVibeOrder(tracks, curIdx);
+      setPlayOrder(newOrder);
+      setPosition(0);
+    } else {
+      const curIdx = playOrder[position] ?? 0;
+      setPlayOrder(identityOrder(tracks.length));
+      setPosition(curIdx);
+    }
+    setShuffle(turningOn);
+    setHistory([]);
+  }, [tracks, playOrder, position, shuffle]);
 
   // Kept for API compatibility: callers pass an index into `tracks`; we map it
   // onto the current play order.
   const setCurrentTrackIndex = useCallback((index: number) => {
-    setPlayOrder((curOrder) => {
-      const pos = curOrder.indexOf(index);
-      if (pos < 0) return curOrder;
-      setPosition((curPos) => {
-        setHistory((h) => [...h, curPos].slice(-HISTORY_LIMIT));
-        return pos;
-      });
-      return curOrder;
-    });
-  }, []);
+    const pos = playOrder.indexOf(index);
+    if (pos < 0) return;
+    setHistory((h) => [...h, position].slice(-HISTORY_LIMIT));
+    setPosition(pos);
+  }, [playOrder, position]);
 
   const reorderUpcoming = useCallback((fromIndex: number, toIndex: number) => {
     if (fromIndex < 0 || toIndex < 0) return;
-    setPlayOrder((curOrder) => {
-      setPosition((curPos) => {
-        const pastAndCurrent = curOrder.slice(0, curPos + 1);
-        const upcomingIds = curOrder.slice(curPos + 1);
-        if (fromIndex >= upcomingIds.length || toIndex >= upcomingIds.length) return curPos;
-        const [moved] = upcomingIds.splice(fromIndex, 1);
-        upcomingIds.splice(toIndex, 0, moved);
-        setPlayOrder([...pastAndCurrent, ...upcomingIds]);
-        return curPos;
-      });
-      return curOrder;
-    });
-  }, []);
+    const pastAndCurrent = playOrder.slice(0, position + 1);
+    const upcomingIds = playOrder.slice(position + 1);
+    if (fromIndex >= upcomingIds.length || toIndex >= upcomingIds.length) return;
+    const [moved] = upcomingIds.splice(fromIndex, 1);
+    upcomingIds.splice(toIndex, 0, moved);
+    setPlayOrder([...pastAndCurrent, ...upcomingIds]);
+  }, [playOrder, position]);
 
   // ── Memoised context value ─────────────────────────────────────────────────
   // Without useMemo, every render of PlayerProvider creates a fresh object

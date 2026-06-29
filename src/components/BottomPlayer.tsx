@@ -146,6 +146,7 @@ export default function BottomPlayer() {
     toggleShuffle,
     showQueue,
     setShowQueue,
+    upcoming,
   } = usePlayer();
 
   const { showToast } = useToast();
@@ -934,19 +935,34 @@ export default function BottomPlayer() {
   const sr = currentTrack.sample_rate || (currentTrack.file_url?.endsWith(".wav") ? 96000 : currentTrack.file_url?.endsWith(".flac") ? 48000 : 44100);
   const srStr = (sr / 1000).toFixed(sr % 1000 === 0 ? 0 : 1);
 
+  const nextTrack = upcoming[0]?.track;
+  const nextRawUrl = nextTrack?.file_url || "";
+  const nextAudioSrc = nextRawUrl.includes(".r2.dev/")
+    ? `/api/audio/${nextRawUrl.split(".r2.dev/").pop()}`
+    : nextRawUrl;
+
   return (
     <>
       <audio
         ref={audioRef}
         src={audioSrc || undefined}
         crossOrigin="anonymous"
-        preload="metadata"
+        preload="auto"
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onEnded={handleEnded}
         onError={handleAudioError}
         controlsList="nodownload"
       />
+      {nextAudioSrc && (
+        <audio
+          src={nextAudioSrc}
+          crossOrigin="anonymous"
+          preload="auto"
+          muted
+          controlsList="nodownload"
+        />
+      )}
 
       <QueuePanel 
         open={showQueue} 
