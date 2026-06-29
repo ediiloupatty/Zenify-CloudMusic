@@ -605,6 +605,8 @@ export default function BottomPlayer() {
           }
         });
       }
+    } else if (!isPlaying && audioRef.current) {
+      audioRef.current.pause();
     }
     return () => {
       if (errorSkipRef.current) {

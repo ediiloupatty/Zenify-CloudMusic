@@ -35,9 +35,21 @@ export default function SettingsPage() {
       {/* Content */}
       <div className="flex-1 px-5 py-6 pb-48 max-w-lg mx-auto w-full flex flex-col gap-6">
 
-        <h1 className="text-2xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>
-          Settings
-        </h1>
+        <div className="flex items-center gap-4 mb-2">
+          <Link
+            href="/player"
+            className="w-9 h-9 rounded-full flex md:hidden items-center justify-center transition-all active:scale-95 flex-shrink-0"
+            style={{ background: "var(--bg-card)", color: "var(--text-secondary)" }}
+            title="Back to player"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+            </svg>
+          </Link>
+          <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
+            Settings
+          </h1>
+        </div>
 
         {/* ── Account & Profile Section ── */}
         <section>
