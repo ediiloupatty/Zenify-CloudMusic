@@ -1,289 +1,357 @@
 import Link from "next/link";
 import { auth } from "@/auth";
-import ZenifyGlyph from "@/components/ZenifyGlyph";
 
 export default async function LandingPage() {
   const session = await auth();
   const isLoggedIn = !!session?.user;
 
   return (
-    <div className="min-h-screen font-sans bg-[#0a0c11] text-slate-100 overflow-x-hidden selection:bg-slate-700 selection:text-white">
+    <div className="min-h-screen font-sans bg-[#1d2230] text-slate-100 overflow-x-hidden selection:bg-[#14b8a6] selection:text-white flex flex-col">
       {/* ─── NAVBAR ────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 w-full px-6 md:px-12 py-5 border-b border-white/10 bg-[#0a0c11] backdrop-blur-md">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-[#0a0c11]">
-              <ZenifyGlyph size={18} />
-            </div>
-            <span className="font-black text-xl tracking-tight text-white">
-              Zenify
-            </span>
+      <header className="w-full px-8 md:px-16 py-8 max-w-7xl mx-auto flex items-center justify-between flex-shrink-0">
+        <Link href="/" className="flex items-center gap-3 group">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-[#14b8a6] transition-transform group-hover:scale-110">
+            <path d="M12 2L12 22" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+            <path d="M6 7L6 17" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+            <path d="M18 7L18 17" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+            <path d="M3 10L3 14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+            <path d="M21 10L21 14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+          </svg>
+          <span className="font-bold text-xl tracking-wide text-white">
+            Zenify
+          </span>
+        </Link>
+
+        <nav className="hidden md:flex items-center gap-10 text-sm font-medium text-slate-400">
+          <a href="#about" className="hover:text-white transition-colors">about</a>
+          <a href="#features" className="hover:text-white transition-colors">features</a>
+          <a href="#screenshots" className="hover:text-white transition-colors">screenshots</a>
+          <a href="#download" className="text-white border-b-2 border-[#14b8a6] pb-1 font-semibold">download</a>
+          <a href="https://github.com/ediiloupatty/Zenify" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">github</a>
+          <Link href="/player" className="hover:text-white transition-colors font-semibold text-[#14b8a6]">open player</Link>
+        </nav>
+
+        <div className="flex md:hidden items-center">
+          <Link href="/player" className="text-sm font-bold text-[#14b8a6] hover:underline">
+            Open Player
           </Link>
-
-          <nav className="hidden md:flex items-center gap-8 font-semibold text-sm text-slate-300">
-            <a href="#features" className="hover:text-white transition-colors">Keunggulan</a>
-            <a href="#download" className="hover:text-white transition-colors">Download App</a>
-            <Link href="/player" className="hover:text-white transition-colors">Web Player</Link>
-            <a href="https://github.com/ediiloupatty/Zenify" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">GitHub</a>
-          </nav>
-
-          <div className="flex items-center gap-4">
-            {isLoggedIn ? (
-              <Link
-                href="/player"
-                className="flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-sm bg-white text-slate-950 hover:bg-slate-200 transition-colors"
-              >
-                <span>Buka Web Player</span>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M5 12h14M12 5l7 7-7 7" />
-                </svg>
-              </Link>
-            ) : (
-              <>
-                <Link href="/login" className="font-bold text-sm text-slate-300 hover:text-white transition-colors px-4 py-2">
-                  Sign In
-                </Link>
-                <Link
-                  href="/player"
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-sm bg-white text-slate-950 hover:bg-slate-200 transition-colors"
-                >
-                  <span>Buka Web Player</span>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 12h14M12 5l7 7-7 7" />
-                  </svg>
-                </Link>
-              </>
-            )}
-          </div>
         </div>
       </header>
 
       {/* ─── HERO SECTION ──────────────────────────────────────── */}
-      <section className="py-20 md:py-32 px-6 md:px-12 max-w-7xl mx-auto flex flex-col items-center text-center">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-bold uppercase tracking-widest text-slate-300 mb-8">
-          Masa Depan Pemutar Musik Audiofil
-        </div>
+      <section id="about" className="flex-1 px-8 md:px-16 pt-8 pb-20 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-8 items-center">
+        
+        {/* Left Column (Hero Text & Download) */}
+        <div className="lg:col-span-5 flex flex-col items-start text-left">
+          <p className="text-sm font-semibold text-slate-400 mb-6 tracking-wide uppercase">
+            A minimal music player for Windows
+          </p>
 
-        <h1 className="text-5xl sm:text-6xl md:text-7xl font-black tracking-tight leading-tight max-w-5xl text-white mb-8">
-          Musik untuk Jiwa. <br />
-          Dirancang Sempurna.
-        </h1>
+          <h1 className="text-6xl sm:text-7xl lg:text-8xl font-light tracking-tight leading-none text-white mb-2">
+            MUSIC,
+          </h1>
+          <h1 className="text-6xl sm:text-7xl lg:text-8xl font-light tracking-tight leading-none text-[#14b8a6] mb-8">
+            REIMAGINED.
+          </h1>
 
-        <p className="text-lg sm:text-xl text-slate-300 max-w-3xl leading-relaxed mb-12 font-medium">
-          Dengarkan musik favoritmu dalam resolusi tinggi tanpa kompromi. Menggabungkan penyimpanan awan instan, lirik tersinkronisasi mulus, pencarian cerdas AI, dan pengalaman visual yang bersih.
-        </p>
+          {/* Clean horizontal line */}
+          <div className="w-14 h-[2px] bg-slate-500/60 mb-8" />
 
-        <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
-          <Link
-            href="/player"
-            className="w-full sm:w-auto flex items-center justify-center gap-3 px-10 py-4 rounded-full font-extrabold text-lg bg-white text-slate-950 hover:bg-slate-200 transition-colors"
-          >
-            <span>Buka Web Player</span>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M5 12h14M12 5l7 7-7 7" />
-            </svg>
-          </Link>
+          <p className="text-lg text-slate-300 leading-relaxed mb-10 font-normal max-w-md">
+            Zenify is a lightweight desktop music player that helps you organize, play, and enjoy your music — beautifully.
+          </p>
 
-          <a
-            href="#download"
-            className="w-full sm:w-auto flex items-center justify-center gap-3 px-10 py-4 rounded-full font-extrabold text-lg bg-white/10 hover:bg-white/15 border border-white/20 text-white transition-colors"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.62 1.24A2 2 0 004.41 19h15.18a2 2 0 001.79-.76L22 17" />
-            </svg>
-            <span>Download Aplikasi</span>
-          </a>
-        </div>
-
-        {/* Feature badges preview */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-12 mt-20 text-center border-t border-white/10 pt-16 w-full max-w-6xl">
-          <div className="flex flex-col items-center gap-2">
-            <span className="text-3xl md:text-4xl font-black text-white">24-bit</span>
-            <span className="text-xs md:text-sm font-bold text-slate-400 uppercase tracking-wider">Hi-Res Lossless Audio</span>
+          <div id="download">
+            <a
+              href="https://github.com/ediiloupatty/Zenify/releases"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-4 px-8 py-4 bg-transparent border-2 border-[#14b8a6] text-[#14b8a6] hover:bg-[#14b8a6] hover:text-[#1d2230] transition-all font-bold tracking-wider text-sm shadow-[0_0_25px_rgba(20,184,166,0.25)] group"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" className="transition-colors">
+                <path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z" />
+              </svg>
+              <span>DOWNLOAD FOR WINDOWS</span>
+            </a>
           </div>
-          <div className="flex flex-col items-center gap-2">
-            <span className="text-3xl md:text-4xl font-black text-white">0%</span>
-            <span className="text-xs md:text-sm font-bold text-slate-400 uppercase tracking-wider">Background CPU Idle</span>
-          </div>
-          <div className="flex flex-col items-center gap-2">
-            <span className="text-3xl md:text-4xl font-black text-white">60 FPS</span>
-            <span className="text-xs md:text-sm font-bold text-slate-400 uppercase tracking-wider">Visualizer Premium</span>
-          </div>
-          <div className="flex flex-col items-center gap-2">
-            <span className="text-3xl md:text-4xl font-black text-white">100%</span>
-            <span className="text-xs md:text-sm font-bold text-slate-400 uppercase tracking-wider">Zero-Latency Lyrics</span>
+
+          <div className="mt-6 flex items-center gap-3 text-xs text-slate-400 font-medium">
+            <span>Windows 10 or later</span>
+            <span>•</span>
+            <span>Free to use</span>
+            <span>•</span>
+            <Link href="/player" className="hover:text-white transition-colors underline font-semibold text-slate-300">
+              Open Web Player
+            </Link>
           </div>
         </div>
+
+        {/* Right Column (Stunning App Mockup) */}
+        <div id="screenshots" className="lg:col-span-7 w-full flex justify-center lg:justify-end">
+          <div className="relative w-full max-w-4xl shadow-[0_30px_80px_-15px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden border border-slate-700/50 bg-[#12141d] flex flex-col select-none">
+            
+            {/* Window Chrome Titlebar */}
+            <div className="flex items-center justify-between px-4 py-3 bg-[#161823] border-b border-slate-800 text-slate-500 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-slate-700/50" />
+                <span className="w-2.5 h-2.5 rounded-full bg-slate-700/50" />
+                <span className="w-2.5 h-2.5 rounded-full bg-slate-700/50" />
+              </div>
+              <div className="flex items-center gap-4 text-slate-400 font-mono text-sm">
+                <span>−</span>
+                <span>□</span>
+                <span className="hover:text-red-500 cursor-pointer">×</span>
+              </div>
+            </div>
+
+            {/* App Main Body */}
+            <div className="flex flex-1 h-[440px] sm:h-[480px]">
+              
+              {/* Mockup Sidebar */}
+              <div className="hidden sm:flex flex-col w-[200px] bg-[#12141d] p-5 border-r border-slate-800/80 text-sm">
+                <div className="flex items-center gap-3 mb-8 text-white font-bold tracking-wide">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-[#14b8a6]">
+                    <path d="M12 2L12 22" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                    <path d="M6 7L6 17" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                    <path d="M18 7L18 17" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                  </svg>
+                  <span>Zenify</span>
+                </div>
+
+                <div className="flex flex-col gap-1 text-slate-400 font-medium mb-8">
+                  <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[#14b8a6]/10 text-[#14b8a6] border-l-4 border-[#14b8a6] font-bold">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                    <span>Home</span>
+                  </div>
+                  <div className="flex items-center gap-3 px-3 py-2 rounded-lg hover:text-white cursor-pointer">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <span>Search</span>
+                  </div>
+                  <div className="flex items-center gap-3 px-3 py-2 rounded-lg hover:text-white cursor-pointer">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                    <span>Your Library</span>
+                  </div>
+                  <div className="flex items-center gap-3 px-3 py-2 rounded-lg hover:text-white cursor-pointer">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+                    <span>Playlists</span>
+                  </div>
+                  <div className="flex items-center gap-3 px-3 py-2 rounded-lg hover:text-white cursor-pointer">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 14.5c-2.49 0-4.5-2.01-4.5-4.5S9.51 7.5 12 7.5s4.5 2.01 4.5 4.5-2.01 4.5-4.5 4.5z"/></svg>
+                    <span>Albums</span>
+                  </div>
+                  <div className="flex items-center gap-3 px-3 py-2 rounded-lg hover:text-white cursor-pointer">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                    <span>Artists</span>
+                  </div>
+                  <div className="flex items-center gap-3 px-3 py-2 rounded-lg hover:text-white cursor-pointer">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                    <span>Liked Songs</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-xs font-bold text-slate-500 tracking-wider uppercase px-3 mb-3">
+                  <span>PLAYLISTS</span>
+                  <span>+</span>
+                </div>
+                <div className="flex flex-col gap-3 px-3 text-xs">
+                  <div className="flex items-center gap-3 cursor-pointer hover:text-white">
+                    <span className="w-6 h-6 rounded bg-[#14b8a6] flex-shrink-0" />
+                    <div className="flex flex-col"><span className="font-bold text-slate-300">Chill Vibes</span><span className="text-[10px] text-slate-500">24 tracks</span></div>
+                  </div>
+                  <div className="flex items-center gap-3 cursor-pointer hover:text-white">
+                    <span className="w-6 h-6 rounded bg-[#8b5cf6] flex-shrink-0" />
+                    <div className="flex flex-col"><span className="font-bold text-slate-300">Night Drive</span><span className="text-[10px] text-slate-500">18 tracks</span></div>
+                  </div>
+                  <div className="flex items-center gap-3 cursor-pointer hover:text-white">
+                    <span className="w-6 h-6 rounded bg-[#f97316] flex-shrink-0" />
+                    <div className="flex flex-col"><span className="font-bold text-slate-300">Focus</span><span className="text-[10px] text-slate-500">32 tracks</span></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mockup Main Area */}
+              <div className="flex-1 bg-[#161823] p-6 sm:p-8 overflow-hidden flex flex-col gap-8">
+                <h2 className="text-2xl font-bold text-white tracking-tight">Good morning</h2>
+
+                {/* Recently Played */}
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center justify-between text-xs font-bold">
+                    <span className="text-slate-300 tracking-wide">Recently Played</span>
+                    <span className="text-[#14b8a6] hover:underline cursor-pointer">View all</span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div className="flex flex-col gap-1.5 group cursor-pointer">
+                      <div className="aspect-square rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 overflow-hidden shadow-lg border border-slate-700/50 flex items-center justify-center relative group-hover:scale-105 transition-transform">
+                        <span className="text-slate-500 text-xs font-bold">lowkey</span>
+                      </div>
+                      <span className="font-bold text-xs text-white truncate mt-1">lowkey</span>
+                      <span className="text-[11px] text-slate-400 truncate">Niki</span>
+                    </div>
+                    <div className="flex flex-col gap-1.5 group cursor-pointer">
+                      <div className="aspect-square rounded-xl bg-gradient-to-br from-indigo-900 to-slate-900 overflow-hidden shadow-lg border border-slate-700/50 flex items-center justify-center relative group-hover:scale-105 transition-transform">
+                        <span className="text-indigo-400 text-xs font-bold">Lose</span>
+                      </div>
+                      <span className="font-bold text-xs text-white truncate mt-1">Lose</span>
+                      <span className="text-[11px] text-slate-400 truncate">Niki</span>
+                    </div>
+                    <div className="flex flex-col gap-1.5 group cursor-pointer">
+                      <div className="aspect-square rounded-xl bg-gradient-to-br from-emerald-900 to-teal-950 overflow-hidden shadow-lg border border-slate-700/50 flex items-center justify-center relative group-hover:scale-105 transition-transform">
+                        <span className="text-emerald-400 text-xs font-bold">Pools</span>
+                      </div>
+                      <span className="font-bold text-xs text-white truncate mt-1">Pools</span>
+                      <span className="text-[11px] text-slate-400 truncate">Niki</span>
+                    </div>
+                    <div className="flex flex-col gap-1.5 group cursor-pointer">
+                      <div className="aspect-square rounded-xl bg-[#f97316] overflow-hidden shadow-lg border border-orange-500/50 flex items-center justify-center relative group-hover:scale-105 transition-transform">
+                        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow">
+                          <div className="w-3 h-3 rounded-full bg-[#f97316]" />
+                        </div>
+                      </div>
+                      <span className="font-bold text-xs text-white truncate mt-1">Every Summertime</span>
+                      <span className="text-[11px] text-slate-400 truncate">Niki</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Your Playlists */}
+                <div className="flex flex-col gap-4 mt-2">
+                  <div className="flex items-center justify-between text-xs font-bold">
+                    <span className="text-slate-300 tracking-wide">Your Playlists</span>
+                    <span className="text-[#14b8a6] hover:underline cursor-pointer">View all</span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div className="flex flex-col gap-1 cursor-pointer group">
+                      <div className="h-28 rounded-xl bg-[#14b8a6] p-4 flex flex-col justify-between shadow-lg group-hover:scale-105 transition-transform">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+                        <span className="font-bold text-xs text-white truncate">Niki</span>
+                      </div>
+                      <span className="text-[11px] text-slate-500 font-medium mt-1">17 tracks</span>
+                    </div>
+                    <div className="flex flex-col gap-1 cursor-pointer group">
+                      <div className="h-28 rounded-xl bg-[#6366f1] p-4 flex flex-col justify-between shadow-lg group-hover:scale-105 transition-transform">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+                        <span className="font-bold text-xs text-white truncate">DJ Snake</span>
+                      </div>
+                      <span className="text-[11px] text-slate-500 font-medium mt-1">11 tracks</span>
+                    </div>
+                    <div className="flex flex-col gap-1 cursor-pointer group">
+                      <div className="h-28 rounded-xl bg-[#f97316] p-4 flex flex-col justify-between shadow-lg group-hover:scale-105 transition-transform">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+                        <span className="font-bold text-xs text-white truncate">bbno$</span>
+                      </div>
+                      <span className="text-[11px] text-slate-500 font-medium mt-1">8 tracks</span>
+                    </div>
+                    <div className="flex flex-col gap-1 cursor-pointer group">
+                      <div className="h-28 rounded-xl border-2 border-dashed border-slate-700 flex flex-col items-center justify-center gap-2 group-hover:border-slate-500 transition-colors">
+                        <span className="text-2xl text-slate-500 group-hover:text-slate-300 transition-colors">+</span>
+                      </div>
+                      <span className="text-[11px] text-slate-500 font-medium mt-1 text-center">Create New Playlist</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* Mockup Bottom Player */}
+            <div className="flex items-center justify-between px-6 py-4 bg-[#11131b] border-t border-slate-800 text-white select-none">
+              <div className="flex items-center gap-3 w-40 truncate">
+                <div className="w-10 h-10 rounded-lg bg-slate-700 flex-shrink-0 border border-slate-600 flex items-center justify-center">
+                  <span className="text-[10px] font-bold text-slate-400">LK</span>
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="font-bold text-xs text-white truncate">lowkey</span>
+                  <span className="text-[10px] text-slate-400 truncate">Niki</span>
+                </div>
+              </div>
+
+              {/* Controls + Scrub bar */}
+              <div className="flex items-center gap-6 flex-1 max-w-md justify-center">
+                <span className="text-[11px] text-slate-500 font-mono">1:07</span>
+                <div className="flex-1 h-1 rounded-full bg-slate-700 relative flex items-center">
+                  <div className="w-1/3 h-full bg-[#14b8a6] rounded-full" />
+                  <div className="w-3 h-3 rounded-full bg-white absolute left-1/3 -ml-1.5 shadow" />
+                </div>
+                <span className="text-[11px] text-slate-500 font-mono">2:51</span>
+
+                <div className="flex items-center gap-4 text-slate-400">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                  <div className="w-8 h-8 rounded-full bg-[#14b8a6] flex items-center justify-center text-[#11131b] shadow-lg cursor-pointer hover:scale-105 transition-transform">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                  </div>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                </div>
+              </div>
+
+              {/* Volume */}
+              <div className="hidden sm:flex items-center gap-3 w-40 justify-end text-slate-400">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                <div className="w-20 h-1 rounded-full bg-slate-700 relative flex items-center">
+                  <div className="w-4/5 h-full bg-[#14b8a6] rounded-full" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-white absolute left-4/5 -ml-1 shadow" />
+                </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="ml-2"><path d="M3 18h13v-2H3v2zm0-5h10v-2H3v2zm0-7v2h13V6H3zm18 9.59L17.42 12 21 8.41 19.59 7l-5 5 5 5L21 15.59z"/></svg>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
       </section>
 
-      {/* ─── FEATURES SECTION (Bento Grid) ──────────────────────── */}
-      <section id="features" className="py-20 px-6 md:px-12 max-w-7xl mx-auto">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-5xl font-black tracking-tight text-white mb-6">
-            Dirancang Spesifik untuk <br />
-            Pengalaman Mendengarkan Terbaik
-          </h2>
-          <p className="text-lg text-slate-400 max-w-2xl mx-auto font-medium">
-            Setiap komponen dalam Zenify dioptimalkan secara mendalam demi kenyamanan, kualitas suara tertinggi, dan performa seketika.
+      {/* ─── DIVIDER ───────────────────────────────────────────── */}
+      <div className="max-w-7xl mx-auto px-8 md:px-16 w-full">
+        <div className="w-full border-t border-slate-700/50 my-12" />
+      </div>
+
+      {/* ─── FEATURES GRID ─────────────────────────────────────── */}
+      <section id="features" className="max-w-7xl mx-auto px-8 md:px-16 pb-28 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 w-full">
+        <div className="flex flex-col">
+          <span className="text-base font-bold text-[#14b8a6] mb-2 font-mono">01</span>
+          <h3 className="text-xl font-bold text-white mb-3 tracking-tight">Minimal Design</h3>
+          <p className="text-slate-400 text-sm leading-relaxed font-normal">
+            Clean and modern interface that stays out of your way.
           </p>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Bento Card 1 */}
-          <div className="md:col-span-2 bg-white/5 border border-white/10 rounded-3xl p-8 md:p-12 flex flex-col justify-between">
-            <div>
-              <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center text-white mb-8">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2a10 10 0 0 1 10 10c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2z" />
-                  <path d="M12 6v6l4 2" />
-                </svg>
-              </div>
-              <h3 className="text-2xl md:text-3xl font-bold text-white mb-4">Lirik Apple Music Style 100% Singkron</h3>
-              <p className="text-slate-300 text-base md:text-lg leading-relaxed font-medium">
-                Dilengkapi dengan engine sinkronisasi tingkat kata (per-word sweep) berbasis requestAnimationFrame (RAF) super mulus. Tidak ada jeda atau keterlambatan lirik saat kamu bernyanyi bersama.
-              </p>
-            </div>
-            <div className="mt-8 pt-6 border-t border-white/10 flex items-center gap-3 text-sm font-semibold text-slate-300">
-              <span>Fitur Otomatis di Semua Lagu</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-            </div>
-          </div>
-
-          {/* Bento Card 2 */}
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-8 md:p-12 flex flex-col justify-between">
-            <div>
-              <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center text-white mb-8">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="7 10 12 15 17 10" />
-                  <line x1="12" y1="15" x2="12" y2="3" />
-                </svg>
-              </div>
-              <h3 className="text-2xl font-bold text-white mb-4">Cloud Music & AI Search</h3>
-              <p className="text-slate-300 text-base leading-relaxed font-medium">
-                Pencarian semantik berteknologi AI (Cloudflare AI) memungkinkan kamu mencari nuansa lagu, mood, atau potongan lirik secara instan.
-              </p>
-            </div>
-            <div className="mt-8 pt-6 border-t border-white/10 flex items-center gap-3 text-sm font-semibold text-slate-300">
-              <span>Cloudflare R2 Storage</span>
-            </div>
-          </div>
-
-          {/* Bento Card 3 */}
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-8 md:p-12 flex flex-col justify-between">
-            <div>
-              <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center text-white mb-8">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-                </svg>
-              </div>
-              <h3 className="text-2xl font-bold text-white mb-4">Smart Background Throttling</h3>
-              <p className="text-slate-300 text-base leading-relaxed font-medium">
-                Animasi visualizer 60 FPS akan berhenti sepenuhnya saat aplikasi di-*minimize* atau latar belakang. Beban CPU/GPU turun ke 0% saat memutar lagu!
-              </p>
-            </div>
-            <div className="mt-8 pt-6 border-t border-white/10 flex items-center gap-3 text-sm font-semibold text-slate-300">
-              <span>Performa Sangat Ringan</span>
-            </div>
-          </div>
-
-          {/* Bento Card 4 */}
-          <div className="md:col-span-2 bg-white/5 border border-white/10 rounded-3xl p-8 md:p-12 flex flex-col justify-between">
-            <div>
-              <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center text-white mb-8">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-                  <line x1="8" y1="21" x2="16" y2="21" />
-                  <line x1="12" y1="17" x2="12" y2="21" />
-                </svg>
-              </div>
-              <h3 className="text-2xl md:text-3xl font-bold text-white mb-4">Integrasi Tingkat Desktop (Discord RPC & Media Session)</h3>
-              <p className="text-slate-300 text-base md:text-lg leading-relaxed font-medium">
-                Tersambung penuh dengan sistem operasi. Kontrol pemutaran lewat tombol headset, bilah notifikasi, hingga status aktivitas lagu secara langsung di profil Discord kamu lewat Discord Rich Presence.
-              </p>
-            </div>
-            <div className="mt-8 pt-6 border-t border-white/10 flex items-center gap-3 text-sm font-semibold text-slate-300">
-              <span>Native OS Integration</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-            </div>
-          </div>
+        <div className="flex flex-col">
+          <span className="text-base font-bold text-[#14b8a6] mb-2 font-mono">02</span>
+          <h3 className="text-xl font-bold text-white mb-3 tracking-tight">Your Music</h3>
+          <p className="text-slate-400 text-sm leading-relaxed font-normal">
+            Play your local files with full support for all formats.
+          </p>
         </div>
-      </section>
-
-      {/* ─── DOWNLOAD SECTION ───────────────────────────────────── */}
-      <section id="download" className="py-24 px-6 md:px-12 max-w-7xl mx-auto">
-        <div className="rounded-[3rem] bg-white/5 border border-white/10 p-8 md:p-20 overflow-hidden">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-xs font-bold uppercase tracking-widest text-slate-200 mb-8">
-              Aplikasi Desktop Premium
-            </div>
-
-            <h2 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-white mb-8 leading-tight">
-              Pengalaman Musik Mendalam <br />
-              di Desktop Kamu.
-            </h2>
-
-            <p className="text-lg md:text-xl text-slate-300 leading-relaxed mb-12 font-medium">
-              Nikmati Zenify sebagai aplikasi mandiri yang super cepat. Dibangun menggunakan arsitektur mutakhir (Go + Webview) yang menjamin performa tanpa kompromi, kontrol sistem operasi bawaan, dan fitur Discord Rich Presence (RPC) secara otomatis.
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center gap-4">
-              <a
-                href="https://github.com/ediiloupatty/Zenify/releases"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full sm:w-auto flex items-center justify-center gap-4 px-12 py-5 rounded-full font-extrabold text-lg bg-white text-slate-950 hover:bg-slate-200 transition-colors"
-              >
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.62 1.24A2 2 0 004.41 19h15.18a2 2 0 001.79-.76L22 17" />
-                </svg>
-                <div className="flex flex-col text-left">
-                  <span className="text-[11px] font-black tracking-wider text-slate-700 uppercase leading-none mb-1">Download untuk</span>
-                  <span className="text-xl font-black leading-none">Windows (64-bit)</span>
-                </div>
-              </a>
-
-              <Link
-                href="/player"
-                className="w-full sm:w-auto flex items-center justify-center gap-3 px-10 py-5 rounded-full font-extrabold text-lg bg-white/10 hover:bg-white/15 border border-white/20 text-white transition-colors"
-              >
-                <span>Buka Web Player</span>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M5 12h14M12 5l7 7-7 7" />
-                </svg>
-              </Link>
-            </div>
-
-            <div className="flex items-center gap-8 mt-12 text-sm font-semibold text-slate-400 border-t border-white/10 pt-8">
-              <div className="flex items-center gap-2">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-slate-200"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                <span>Instalasi Bersih & Ringan</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-slate-200"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                <span>Update Otomatis via GitHub</span>
-              </div>
-            </div>
-          </div>
+        <div className="flex flex-col">
+          <span className="text-base font-bold text-[#14b8a6] mb-2 font-mono">03</span>
+          <h3 className="text-xl font-bold text-white mb-3 tracking-tight">Smart Library</h3>
+          <p className="text-slate-400 text-sm leading-relaxed font-normal">
+            Organize automatically. Find anything, instantly.
+          </p>
+        </div>
+        <div className="flex flex-col">
+          <span className="text-base font-bold text-[#14b8a6] mb-2 font-mono">04</span>
+          <h3 className="text-xl font-bold text-white mb-3 tracking-tight">Built for Windows</h3>
+          <p className="text-slate-400 text-sm leading-relaxed font-normal">
+            Lightweight, fast, and optimized for performance.
+          </p>
         </div>
       </section>
 
       {/* ─── FOOTER ────────────────────────────────────────────── */}
-      <footer className="border-t border-white/10 bg-[#0a0c11] py-12 px-6 md:px-12 mt-20">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-sm text-slate-400">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-[#0a0c11]">
-              <ZenifyGlyph size={16} />
-            </div>
-            <span className="font-bold text-white">Zenify Music Platform</span>
+      <footer className="w-full border-t border-slate-800/80 bg-[#171a26] py-10 px-8 md:px-16 mt-auto">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 font-medium">
+          <div className="flex items-center gap-2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-[#14b8a6]">
+              <path d="M12 2L12 22" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+              <path d="M6 7L6 17" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+              <path d="M18 7L18 17" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+            </svg>
+            <span className="text-slate-400 font-bold tracking-wide">Zenify</span>
           </div>
-
-          <p className="text-center md:text-left font-medium">
-            © {new Date().getFullYear()} Zenify. Built for audiophiles. Music for the soul.
-          </p>
-
+          <span>© {new Date().getFullYear()} Zenify. Minimal music player for Windows.</span>
           <div className="flex items-center gap-6 font-semibold">
-            <a href="https://github.com/ediiloupatty/Zenify" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">GitHub Repository</a>
+            <a href="https://github.com/ediiloupatty/Zenify" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">GitHub</a>
             <Link href="/player" className="hover:text-white transition-colors">Web Player</Link>
           </div>
         </div>
