@@ -15,7 +15,7 @@ export default function BrowseShell({ children }: { children: React.ReactNode })
       <Sidebar />
 
       <QueueAwareMain className="relative z-10 flex-1 flex flex-col overflow-hidden">
-        <header className="flex items-center gap-4 px-5 md:px-8 pt-6 pb-2 flex-shrink-0">
+        <header className="flex md:hidden items-center gap-4 px-5 pt-6 pb-2 flex-shrink-0">
           <Link
             href="/player"
             className="w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95 flex-shrink-0"

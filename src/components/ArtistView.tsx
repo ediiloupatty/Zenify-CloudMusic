@@ -63,7 +63,7 @@ export default function ArtistView({
       )}
 
       {/* ── Top bar: back + queue ── */}
-      <div className="absolute top-5 left-5 z-30">
+      <div className="absolute top-5 left-5 z-30 md:hidden">
         <Link
           href="/player"
           className="w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95"

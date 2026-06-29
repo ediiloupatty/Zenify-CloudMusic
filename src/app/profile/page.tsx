@@ -87,7 +87,7 @@ export default async function ProfilePage() {
       <QueueAwareMain className="relative z-10 flex-1 flex flex-col overflow-hidden">
         <div className="flex-1 overflow-y-auto pb-44" style={{ background: "var(--bg-base)" }}>
           {/* ── Back button ── */}
-      <div className="absolute top-5 left-5 z-30">
+      <div className="absolute top-5 left-5 z-30 md:hidden">
         <Link
           href="/player"
           className="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95"

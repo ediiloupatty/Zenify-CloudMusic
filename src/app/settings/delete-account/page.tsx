@@ -22,7 +22,7 @@ export default function DeleteAccountPage() {
       >
         <Link
           href="/settings"
-          className="w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-95"
+          className="w-9 h-9 rounded-full flex md:hidden items-center justify-center transition-all active:scale-95"
           style={{ background: "var(--bg-card)", color: "var(--text-secondary)" }}
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
