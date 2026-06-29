@@ -3,6 +3,10 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import Fuse from "fuse.js";
 import { Track } from "@/lib/cloudflare";
+import { usePlayer } from "@/context/PlayerContext";
+import CoverImage from "@/components/CoverImage";
+import { cleanTitle } from "@/lib/cleanTitle";
+import { hashString, PALETTES } from "@/lib/utils";
 
 type AISearchBarProps = {
   allTracks: Track[];
@@ -14,17 +18,84 @@ type AISearchBarProps = {
 const AI_INTENT_PATTERN =
   /\b(lagu|lagu2|musik|music|songs?|playlist|buat|untuk|yang|mirip|kayak|seperti|rekomendasi|recommend|mood|vibe|sedih|galau|patah\s*hati|rindu|kangen|nostalgia|santai|chill|tenang|relax|semangat|energik|enerjik|upbeat|happy|senang|ceria|romantis|romantic|cinta|love|sad|mellow|melow|sendu|fokus|focus|belajar|study|tidur|sleep|workout|olahraga|gym|party|pesta|jalan|nyetir|driving)\b/i;
 
+function SearchTrackCover({ track }: { track: Track }) {
+  if (track.cover_url) {
+    return <CoverImage src={track.cover_url} alt={track.title} className="w-10 h-10 rounded-md object-cover flex-shrink-0" />;
+  }
+  const [c1, c2] = PALETTES[hashString(track.title + track.category) % PALETTES.length];
+  return (
+    <div className="w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0 shadow-sm" style={{ background: `linear-gradient(135deg, ${c1}, ${c2})` }}>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="white" className="opacity-90 drop-shadow">
+        <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+      </svg>
+    </div>
+  );
+}
+
 export default function AISearchBar({ allTracks, onFilteredTracks }: AISearchBarProps) {
   const [query, setQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Track[]>([]);
+  const [isOpen, setIsOpen] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<Track[]>([]);
   const [isAILoading, setIsAILoading] = useState(false);
   const [aiMessage, setAiMessage] = useState<string | null>(null);
   const [isAIMode, setIsAIMode] = useState(false);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
 
-  // Build a Fuse index whenever the track list changes. Fuse.js handles fuzzy
-  // matching, typo tolerance, and relevance scoring out of the box.
+  const { playTrack } = usePlayer();
+
+  // Load recent searches from localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("zenify_recent_searches");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          setRecentSearches(parsed);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load recent searches", err);
+    }
+  }, []);
+
+  // Handle outside click to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const saveRecentSearch = (track: Track) => {
+    try {
+      const updated = [track, ...recentSearches.filter((t) => t.id !== track.id)].slice(0, 10);
+      setRecentSearches(updated);
+      localStorage.setItem("zenify_recent_searches", JSON.stringify(updated));
+    } catch (err) {
+      console.error("Failed to save recent search", err);
+    }
+  };
+
+  const removeRecentSearch = (e: React.MouseEvent, trackId: string) => {
+    e.stopPropagation();
+    try {
+      const updated = recentSearches.filter((t) => t.id !== trackId);
+      setRecentSearches(updated);
+      localStorage.setItem("zenify_recent_searches", JSON.stringify(updated));
+    } catch (err) {
+      console.error("Failed to remove recent search", err);
+    }
+  };
+
+  // Build a Fuse index whenever the track list changes.
   const fuse = useMemo(
     () =>
       new Fuse(allTracks, {
@@ -34,30 +105,29 @@ export default function AISearchBar({ allTracks, onFilteredTracks }: AISearchBar
           { name: "genre", weight: 0.1 },
           { name: "category", weight: 0.1 },
         ],
-        threshold: 0.4,        // 0 = exact, 1 = match anything
+        threshold: 0.4,
         includeScore: true,
         minMatchCharLength: 2,
-        ignoreLocation: true,  // match anywhere in the string
+        ignoreLocation: true,
       }),
     [allTracks]
   );
 
-  // Local search: fuzzy filter using Fuse.js (typo tolerant + ranked)
+  // Local search: fuzzy filter using Fuse.js
   const localSearch = useCallback(
     (q: string) => {
       const results = fuse.search(q);
       const filtered = results.map((r) => r.item);
-      onFilteredTracks(filtered.length > 0 ? filtered : []);
+      setSearchResults(filtered);
       setAiMessage(null);
       setIsAIMode(false);
     },
-    [fuse, onFilteredTracks]
+    [fuse]
   );
 
   // AI search: send to /api/ai/search
   const aiSearch = useCallback(
     async (q: string) => {
-      // Cancel any previous in-flight AI request
       if (abortRef.current) abortRef.current.abort();
       const controller = new AbortController();
       abortRef.current = controller;
@@ -79,18 +149,15 @@ export default function AISearchBar({ allTracks, onFilteredTracks }: AISearchBar
 
         if (uniqueIds.length > 0) {
           const idSet = new Set<string>(uniqueIds);
-          // Preserve AI's ordering
           const ordered = uniqueIds
             .map((id: string) => allTracks.find((t) => t.id === id))
             .filter(Boolean) as Track[];
-          // Add any remaining local search matches not in the AI list
           const localResults = fuse.search(q).map((r) => r.item);
           const remaining = localResults.filter((t) => !idSet.has(t.id));
-          onFilteredTracks([...ordered, ...remaining]);
+          setSearchResults([...ordered, ...remaining]);
         } else {
-          // Fallback to local search if AI returns empty trackIds
           const localResults = fuse.search(q).map((r) => r.item);
-          onFilteredTracks(localResults);
+          setSearchResults(localResults);
         }
 
         setAiMessage(data.message || null);
@@ -98,23 +165,23 @@ export default function AISearchBar({ allTracks, onFilteredTracks }: AISearchBar
         if (err instanceof Error && err.name === "AbortError") return;
         console.error("AI search failed:", err);
         setAiMessage("AI sedang tidak tersedia. Menampilkan hasil pencarian biasa.");
-        // Fallback to local search
         localSearch(q);
       } finally {
         setIsAILoading(false);
       }
     },
-    [allTracks, onFilteredTracks, localSearch, fuse]
+    [allTracks, localSearch, fuse]
   );
 
   // Handle input change with smart routing
   const handleChange = (value: string) => {
     setQuery(value);
+    setIsOpen(true);
 
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     if (!value.trim()) {
-      onFilteredTracks(null); // null = show all
+      setSearchResults([]);
       setAiMessage(null);
       setIsAIMode(false);
       setIsAILoading(false);
@@ -122,9 +189,6 @@ export default function AISearchBar({ allTracks, onFilteredTracks }: AISearchBar
     }
 
     const trimmed = value.trim();
-
-    // AI mode: triggered by /ai prefix, descriptive queries (>20 chars), or
-    // mood/intent keywords — so short queries like "lagu sedih" still hit the AI.
     const isAIQuery =
       trimmed.startsWith("/ai ") ||
       trimmed.length > 20 ||
@@ -132,12 +196,9 @@ export default function AISearchBar({ allTracks, onFilteredTracks }: AISearchBar
 
     if (isAIQuery) {
       const aiQuery = trimmed.startsWith("/ai ") ? trimmed.slice(4) : trimmed;
-      // Instant local search while waiting for AI
       localSearch(trimmed);
-      // Debounce AI requests (800ms)
       debounceRef.current = setTimeout(() => aiSearch(aiQuery), 800);
     } else {
-      // Instant local search
       localSearch(trimmed);
     }
   };
@@ -150,17 +211,33 @@ export default function AISearchBar({ allTracks, onFilteredTracks }: AISearchBar
       const trimmed = query.trim();
       const aiQuery = trimmed.startsWith("/ai ") ? trimmed.slice(4) : trimmed;
       aiSearch(aiQuery);
+    } else if (e.key === "Escape") {
+      setIsOpen(false);
     }
   };
 
   // Clear search
   const handleClear = () => {
     setQuery("");
-    onFilteredTracks(null);
+    setSearchResults([]);
     setAiMessage(null);
     setIsAIMode(false);
     setIsAILoading(false);
     inputRef.current?.focus();
+    setIsOpen(true);
+  };
+
+  const handleTrackClick = (track: Track, list: Track[], idx: number) => {
+    playTrack(list, idx);
+    saveRecentSearch(track);
+    setIsOpen(false);
+  };
+
+  const handleRecentClick = (track: Track) => {
+    const idx = allTracks.findIndex((t) => t.id === track.id);
+    playTrack(allTracks, idx >= 0 ? idx : 0);
+    saveRecentSearch(track);
+    setIsOpen(false);
   };
 
   // Cleanup on unmount
@@ -172,7 +249,7 @@ export default function AISearchBar({ allTracks, onFilteredTracks }: AISearchBar
   }, []);
 
   return (
-    <div className="flex-1 max-w-[480px] relative">
+    <div ref={containerRef} className="flex-1 max-w-[480px] relative">
       {/* Search Input */}
       <div
         className="flex items-center gap-2 rounded-full px-4 py-2.5 transition-all"
@@ -217,6 +294,7 @@ export default function AISearchBar({ allTracks, onFilteredTracks }: AISearchBar
           className="bg-transparent border-none outline-none text-sm w-full"
           style={{ color: "var(--text-primary)" }}
           value={query}
+          onFocus={() => setIsOpen(true)}
           onChange={(e) => handleChange(e.target.value)}
           onKeyDown={handleKeyDown}
         />
@@ -244,36 +322,125 @@ export default function AISearchBar({ allTracks, onFilteredTracks }: AISearchBar
         )}
       </div>
 
-      {/* AI Message Bubble */}
-      {aiMessage && (
+      {/* Popover / Dropdown Menu */}
+      {isOpen && (
         <div
-          className="absolute left-0 right-0 top-full mt-2 px-4 py-3 rounded-2xl text-sm z-50 ai-message-bubble"
-          style={{
-            background: "var(--bg-secondary)",
-            border: "1px solid rgba(99,102,241,0.2)",
-            color: "var(--text-primary)",
-            boxShadow: "0 8px 32px rgba(0,0,0,0.3), 0 0 16px rgba(99,102,241,0.1)",
-          }}
+          className="absolute left-0 right-0 top-full mt-2 bg-[var(--bg-secondary)] border border-[var(--border-card)] rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.7)] z-50 p-4 max-h-[420px] overflow-y-auto scrollbar-thin text-left"
         >
-          <div className="flex items-start gap-2.5">
-            <span className="flex-shrink-0 mt-0.5">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
-              </svg>
+          {/* Header */}
+          <div className="flex items-center justify-between pb-3 mb-3 border-b border-[var(--border-subtle)]">
+            <span className="font-bold text-sm" style={{ color: "var(--text-primary)" }}>
+              {query.trim() ? (isAIMode ? "AI Search Results" : "Search Results") : "Recent Searches"}
             </span>
-            <p className="leading-relaxed flex-1 whitespace-pre-wrap" style={{ color: "var(--text-secondary)" }}>
-              {aiMessage}
-            </p>
             <button
-              onClick={() => setAiMessage(null)}
-              className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center transition-all hover:scale-110"
+              onClick={() => setIsOpen(false)}
+              className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-[var(--bg-card-hover)] transition-colors"
               style={{ color: "var(--text-muted)" }}
+              title="Close"
             >
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" />
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
             </button>
           </div>
+
+          {/* AI Message Bubble inside dropdown */}
+          {aiMessage && (
+            <div
+              className="mb-4 px-4 py-3 rounded-xl text-sm"
+              style={{
+                background: "var(--bg-card)",
+                border: "1px solid rgba(99,102,241,0.3)",
+                color: "var(--text-primary)",
+              }}
+            >
+              <div className="flex items-start gap-2.5">
+                <span className="flex-shrink-0 mt-0.5">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+                  </svg>
+                </span>
+                <p className="leading-relaxed flex-1 whitespace-pre-wrap" style={{ color: "var(--text-secondary)" }}>
+                  {aiMessage}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* List Content */}
+          {!query.trim() ? (
+            recentSearches.length > 0 ? (
+              <div className="flex flex-col gap-1">
+                {recentSearches.map((track) => (
+                  <div
+                    key={track.id}
+                    onClick={() => handleRecentClick(track)}
+                    className="group flex items-center gap-3 p-2 rounded-xl cursor-pointer hover:bg-[var(--bg-card-hover)] transition-colors"
+                  >
+                    <SearchTrackCover track={track} />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm truncate" style={{ color: "var(--text-primary)" }}>
+                        {cleanTitle(track.title)}
+                      </p>
+                      <p className="text-xs truncate" style={{ color: "var(--text-muted)" }}>
+                        Song • {track.artist || track.category}
+                      </p>
+                    </div>
+                    <button
+                      onClick={(e) => removeRecentSearch(e, track.id)}
+                      className="w-7 h-7 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-[var(--bg-card)] transition-all"
+                      style={{ color: "var(--text-muted)" }}
+                      title="Remove"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-8 text-center text-sm" style={{ color: "var(--text-muted)" }}>
+                No recent searches
+              </div>
+            )
+          ) : (
+            searchResults.length > 0 ? (
+              <div className="flex flex-col gap-1">
+                {searchResults.map((track, idx) => (
+                  <div
+                    key={track.id}
+                    onClick={() => handleTrackClick(track, searchResults, idx)}
+                    className="group flex items-center gap-3 p-2 rounded-xl cursor-pointer hover:bg-[var(--bg-card-hover)] transition-colors"
+                  >
+                    <SearchTrackCover track={track} />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm truncate" style={{ color: "var(--text-primary)" }}>
+                        {cleanTitle(track.title)}
+                      </p>
+                      <p className="text-xs truncate" style={{ color: "var(--text-muted)" }}>
+                        Song • {track.artist || track.category}
+                      </p>
+                    </div>
+                    <span
+                      className="w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+                      style={{ border: "1px solid var(--border-card)", color: "var(--accent)" }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="ml-0.5">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-12 text-center text-sm" style={{ color: "var(--text-muted)" }}>
+                No matching tracks found for &quot;{query}&quot;
+              </div>
+            )
+          )}
         </div>
       )}
     </div>
