@@ -17,11 +17,11 @@ export default function NotFound() {
         </p>
       </div>
       <Link
-        href="/"
+        href="/player"
         className="px-6 py-2.5 rounded-full font-semibold text-sm text-white transition-all hover:scale-105 active:scale-95"
         style={{ background: "var(--accent)" }}
       >
-        Back to Home
+        Back to Player
       </Link>
     </div>
   );

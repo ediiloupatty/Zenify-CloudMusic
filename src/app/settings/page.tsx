@@ -38,7 +38,7 @@ export default function SettingsPage() {
         style={{ borderColor: "var(--border-subtle)" }}
       >
         <Link
-          href="/"
+          href="/player"
           className="w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-95"
           style={{ background: "var(--bg-card)", color: "var(--text-secondary)" }}
         >

@@ -46,11 +46,11 @@ export default function Error({
           Try again
         </button>
         <Link
-          href="/"
+          href="/player"
           className="px-6 py-2.5 rounded-full font-semibold text-sm transition-all hover:bg-white/5 active:scale-95"
           style={{ border: "1px solid var(--border-card)", color: "var(--text-secondary)" }}
         >
-          Home
+          Player
         </Link>
       </div>
     </div>

@@ -46,11 +46,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       </div>
       <div className="flex items-center gap-3">
         <Link
-          href="/"
+          href="/player"
           className="px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:opacity-90"
           style={{ background: "var(--accent)", color: "#0a0c11" }}
         >
-          Back to Home
+          Back to Player
         </Link>
         {!loggedIn && (
           <Link

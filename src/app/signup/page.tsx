@@ -27,7 +27,7 @@ export default function SignupPage() {
 
       <div className="w-full max-w-md glass-panel p-8 rounded-2xl z-10">
         <div className="flex items-center justify-center gap-3 mb-8">
-          <Link href="/" className="flex items-center gap-3">
+          <Link href="/player" className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-slate-800">
               <Image src="/logo.png" alt="Zenify Logo" width={40} height={40} className="object-cover" />
             </div>

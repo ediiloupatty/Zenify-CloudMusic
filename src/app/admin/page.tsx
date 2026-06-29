@@ -429,7 +429,7 @@ export default function AdminPage() {
       <header className="sticky top-0 z-30 px-6 md:px-10 py-4 flex items-center justify-between"
         style={{ background: "rgba(13,17,28,0.85)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
         <div className="flex items-center gap-4">
-          <Link href="/"
+          <Link href="/player"
             className="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95"
             style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="white" className="opacity-70">

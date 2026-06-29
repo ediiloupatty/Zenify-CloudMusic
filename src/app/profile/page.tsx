@@ -42,8 +42,8 @@ export default async function ProfilePage() {
         >
           Sign In
         </Link>
-        <Link href="/" className="text-sm" style={{ color: "var(--text-muted)" }}>
-          Back to Home
+        <Link href="/player" className="text-sm" style={{ color: "var(--text-muted)" }}>
+          Back to Player
         </Link>
       </div>
     );
@@ -89,7 +89,7 @@ export default async function ProfilePage() {
           {/* ── Back button ── */}
       <div className="absolute top-5 left-5 z-30">
         <Link
-          href="/"
+          href="/player"
           className="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95"
           style={{ background: "rgba(0,0,0,0.5)", color: "#fff", backdropFilter: "blur(10px)" }}
         >

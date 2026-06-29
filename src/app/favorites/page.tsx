@@ -39,8 +39,8 @@ export default async function FavoritesPage() {
         >
           Sign In
         </Link>
-        <Link href="/" className="text-sm" style={{ color: "var(--text-muted)" }}>
-          Back to Home
+        <Link href="/player" className="text-sm" style={{ color: "var(--text-muted)" }}>
+          Back to Player
         </Link>
       </div>
     );
@@ -74,7 +74,7 @@ export default async function FavoritesPage() {
             Tap the heart icon on any track to save it here.
           </p>
           <Link
-            href="/"
+            href="/player"
             className="mt-2 px-6 py-2.5 rounded-full font-semibold text-sm text-white"
             style={{ background: "var(--accent)" }}
           >

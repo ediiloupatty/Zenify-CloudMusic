@@ -54,8 +54,8 @@ export default async function ArtistPage({
         <p className="text-sm" style={{ color: "var(--text-muted)" }}>
           No tracks by &quot;{name}&quot; in your library.
         </p>
-        <Link href="/" className="px-6 py-2.5 rounded-full font-semibold text-sm text-white" style={{ background: "var(--accent)" }}>
-          Back to Home
+        <Link href="/player" className="px-6 py-2.5 rounded-full font-semibold text-sm text-white" style={{ background: "var(--accent)" }}>
+          Back to Player
         </Link>
       </div>
     );
