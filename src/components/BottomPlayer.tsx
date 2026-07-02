@@ -921,15 +921,19 @@ export default function BottomPlayer() {
 
       // Crossfade into the next track during the final CROSSFADE_SEC seconds.
       // Skipped for repeat-one (would fade into itself), when a sleep "end of
-      // track" stop is pending, at the end of the queue (no next), and for
-      // tracks too short to overlap cleanly.
+      // track" stop is pending, at the end of the queue with repeat off (no
+      // next), and for tracks too short to overlap cleanly. With repeat-all the
+      // wrap back to the start of the queue crossfades too (needs >1 track so
+      // we never fade a song into itself).
       const d = audioRef.current.duration;
+      const hasNext =
+        !!upcoming[0]?.track || (repeatMode === "all" && tracks.length > 1);
       if (
         isPlaying &&
         !crossfadingRef.current &&
         repeatMode !== "one" &&
         !sleepEndOfTrackRef.current &&
-        upcoming[0]?.track &&
+        hasNext &&
         Number.isFinite(d) && d > CROSSFADE_SEC + 1 &&
         audioRef.current.currentTime >= d - CROSSFADE_SEC
       ) {
@@ -946,19 +950,24 @@ export default function BottomPlayer() {
           );
         } catch {}
       }
-
-      // Report playback position to the OS so the system media bar / lock
-      // screen progress stays in sync with the in-app player.
-      if ("mediaSession" in navigator && currentTrack) {
-        try {
-          navigator.mediaSession.setPositionState({
-            duration: audioRef.current.duration || 0,
-            position: Math.min(audioRef.current.currentTime, audioRef.current.duration || Infinity),
-            playbackRate: 1,
-          });
-        } catch {}
-      }
     }
+  };
+
+  // Report playback position to the OS media bar / lock screen. The OS
+  // extrapolates position from (position, playbackRate) on its own clock, so
+  // this only needs to run when that baseline changes — track load, seek, and
+  // play/pause — not on every timeupdate tick.
+  const reportPositionState = () => {
+    if (typeof navigator === "undefined" || !("mediaSession" in navigator)) return;
+    const audio = audioRef.current;
+    if (!audio) return;
+    try {
+      navigator.mediaSession.setPositionState({
+        duration: audio.duration || 0,
+        position: Math.min(audio.currentTime, audio.duration || Infinity),
+        playbackRate: audio.playbackRate || 1,
+      });
+    } catch {}
   };
 
   // Backfill duration into D1 for legacy tracks uploaded before it was extracted
@@ -999,6 +1008,7 @@ export default function BottomPlayer() {
         }
       } catch {}
     }
+    reportPositionState();
     if (playCountedRef.current !== currentTrack.id) {
       playCountedRef.current = currentTrack.id;
       fetch("/api/play", {
@@ -1151,6 +1161,9 @@ export default function BottomPlayer() {
     }
 
     ms.playbackState = isPlaying ? "playing" : "paused";
+    // Re-baseline the OS progress bar on play/pause (and on track change via
+    // this effect's deps) so it doesn't keep extrapolating a stale position.
+    reportPositionState();
 
     // Action handlers — let OS buttons drive playback directly.
     ms.setActionHandler("play", () => {
@@ -1248,6 +1261,10 @@ export default function BottomPlayer() {
       switch (e.key) {
         case " ":
         case "Spacebar":
+          // A focused button also activates on Space — bail out and let the
+          // native activation run alone, otherwise one press fires both the
+          // button's action and play/pause (e.g. play → instantly pause again).
+          if (el && el.closest("button")) return;
           e.preventDefault();
           togglePlay();
           break;
@@ -1446,6 +1463,7 @@ export default function BottomPlayer() {
         preload="auto"
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
+        onSeeked={reportPositionState}
         onPlaying={handlePlaying}
         onEnded={handleEnded}
         onError={handleAudioError}
