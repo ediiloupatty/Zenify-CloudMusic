@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, ReactNode } from "react";
 import { Track } from "@/lib/cloudflare";
+import { cleanTitle } from "@/lib/cleanTitle";
 
 const STORAGE_KEY_QUEUE = "zenify_queue";
 const STORAGE_KEY_STATE = "zenify_state";
@@ -49,6 +50,28 @@ const COOLDOWN_PENALTY = 0.05; // near-zero weight for tracks violating cooldown
 
 const identityOrder = (length: number): number[] =>
   Array.from({ length }, (_, i) => i);
+
+// Remove duplicate tracks from a queue so the same song can't appear more than
+// once. Collapses BOTH exact id matches AND entries that would DISPLAY
+// identically (same cleaned title + artist) — the latter is what surfaces as
+// "judul c, judul c, judul c" in the queue when a library holds the same
+// recording uploaded more than once under different ids. Keeps the first
+// occurrence and preserves order.
+function dedupeTracks(list: Track[]): Track[] {
+  const seenIds = new Set<string>();
+  const seenDisplay = new Set<string>();
+  const out: Track[] = [];
+  for (const t of list) {
+    if (t.id && seenIds.has(t.id)) continue;
+    const title = cleanTitle(t.title || "").toLowerCase().trim();
+    const displayKey = title ? `${title}|${(t.artist || "").toLowerCase().trim()}` : "";
+    if (displayKey && seenDisplay.has(displayKey)) continue;
+    if (t.id) seenIds.add(t.id);
+    if (displayKey) seenDisplay.add(displayKey);
+    out.push(t);
+  }
+  return out;
+}
 
 // Pick one item index by weight (roulette-wheel selection).
 function weightedPick(items: number[], weights: number[]): number {
@@ -219,13 +242,11 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       if (!queue || !Array.isArray(queue.tracks) || queue.tracks.length === 0) return;
 
       const n = queue.tracks.length;
-      setTracks(queue.tracks);
 
       const order =
         Array.isArray(queue.playOrder) && queue.playOrder.length === n
           ? queue.playOrder
           : identityOrder(n);
-      setPlayOrder(order);
 
       let pos = 0;
       if (typeof (state?.position) === "number") {
@@ -234,7 +255,35 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         const mapped = order.indexOf(state.currentTrackIndex);
         pos = mapped >= 0 ? mapped : state.currentTrackIndex;
       }
-      setPosition(Math.min(Math.max(0, pos), n - 1));
+      pos = Math.min(Math.max(0, pos), n - 1);
+
+      // Heal queues saved before dedup shipped: if the restored list still holds
+      // duplicates, clean it and rebuild a fresh order anchored on whatever was
+      // playing, so the "up next" list doesn't show the same song repeatedly.
+      const cleaned = dedupeTracks(queue.tracks as Track[]);
+      if (cleaned.length !== n) {
+        const currentId = (queue.tracks as Track[])[order[pos]]?.id;
+        const anchor = Math.max(0, currentId ? cleaned.findIndex((t) => t.id === currentId) : 0);
+        const wasShuffled = state?.shuffle === true;
+        setTracks(cleaned);
+        if (wasShuffled) {
+          setPlayOrder(buildVibeOrder(cleaned, anchor));
+          setPosition(0);
+        } else {
+          setPlayOrder(identityOrder(cleaned.length));
+          setPosition(anchor);
+        }
+        setHistory([]);
+        if (state?.repeatMode) setRepeatMode(state.repeatMode);
+        setShuffle(wasShuffled);
+        if (typeof state?.isPlaying === "boolean") setIsPlaying(state.isPlaying);
+        if (legRaw) { try { localStorage.removeItem(STORAGE_KEY_LEGACY); } catch {} }
+        return;
+      }
+
+      setTracks(queue.tracks);
+      setPlayOrder(order);
+      setPosition(pos);
 
       if (Array.isArray(queue.history)) setHistory(queue.history);
       if (state?.repeatMode) setRepeatMode(state.repeatMode);
@@ -285,13 +334,22 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   // all 37+ consumer components.
 
   const playTrack = useCallback((newTracks: Track[], startIndex: number) => {
-    setTracks(newTracks);
+    // Drop duplicates before building the queue. Removal can shift indices (or
+    // remove the very track the user clicked, if it was the duplicate), so remap
+    // the requested start onto the deduped list by track id.
+    const anchorId = newTracks[startIndex]?.id;
+    const deduped = dedupeTracks(newTracks);
+    let start = anchorId ? deduped.findIndex((t) => t.id === anchorId) : startIndex;
+    if (start < 0) start = Math.min(startIndex, deduped.length - 1);
+    start = Math.max(0, start);
+
+    setTracks(deduped);
     if (shuffle) {
-      setPlayOrder(buildVibeOrder(newTracks, startIndex));
+      setPlayOrder(buildVibeOrder(deduped, start));
       setPosition(0);
     } else {
-      setPlayOrder(identityOrder(newTracks.length));
-      setPosition(startIndex);
+      setPlayOrder(identityOrder(deduped.length));
+      setPosition(start);
     }
     setHistory([]);
     setIsPlaying(true);
