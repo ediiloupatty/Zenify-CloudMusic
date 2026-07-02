@@ -909,6 +909,20 @@ export default function BottomPlayer() {
     playPrevTrack();
   };
 
+  // When the window becomes visible/focused again, snap the progress bar and
+  // duration back to the live audio position in one shot — handleTimeUpdate
+  // skips these setstates while the window is unwatched, so without this the
+  // bar would be stale until the next timeupdate tick.
+  useEffect(() => {
+    const stop = onRenderingActiveChange(() => {
+      if (isRenderingActive() && audioRef.current) {
+        setProgress(audioRef.current.currentTime);
+        setDuration(audioRef.current.duration || 0);
+      }
+    });
+    return stop;
+  }, []);
+
   // Throttled persistence of the playback position so a reload / page change can
   // resume from where the user left off (keeps every view in sync).
   const lastPosSaveRef = useRef(0);
@@ -916,8 +930,15 @@ export default function BottomPlayer() {
 
   const handleTimeUpdate = () => {
     if (audioRef.current) {
-      setProgress(audioRef.current.currentTime);
-      setDuration(audioRef.current.duration || 0);
+      // The progress bar / time readout are the ONLY consumers of these two
+      // states. When the window isn't being viewed (hidden tab, or a game in
+      // front) nobody sees them, so skip the setState — otherwise the whole
+      // player re-renders ~4x/second behind the scenes for nothing. The bar is
+      // resynced the instant focus returns (see the rendering-active effect).
+      if (isRenderingActive()) {
+        setProgress(audioRef.current.currentTime);
+        setDuration(audioRef.current.duration || 0);
+      }
 
       // Crossfade into the next track during the final CROSSFADE_SEC seconds.
       // Skipped for repeat-one (would fade into itself), when a sleep "end of
@@ -1340,7 +1361,16 @@ export default function BottomPlayer() {
     };
 
     const renderFrame = () => {
-      if (!analyserRef.current || !canvasRef.current) { scheduleNext(); return; }
+      const audio = audioRef.current;
+      // Bail out of ALL canvas work when idle or the window isn't being viewed,
+      // then just idle-poll via scheduleNext. rAF is already paused by the
+      // browser for a hidden tab, but "unfocused yet visible" (e.g. a game in
+      // front) keeps rAF firing — without this early exit we'd redraw the whole
+      // spectrum behind the game for nothing.
+      if (!analyserRef.current || !canvasRef.current || !audio || audio.paused || !isRenderingActive()) {
+        scheduleNext();
+        return;
+      }
 
       const analyser = analyserRef.current;
       const bufferLength = analyser.frequencyBinCount;
@@ -1365,9 +1395,8 @@ export default function BottomPlayer() {
       // Read playback position straight from the element (not React state):
       // keeps this effect free of `progress`/`duration` deps, which would tear
       // down and rebuild the whole RAF loop on every timeupdate (~4x/s).
-      const audioEl = audioRef.current;
-      const dur = audioEl?.duration || 0;
-      const currentProgressIdx = dur ? ((audioEl?.currentTime || 0) / dur) * bufferLength : 0;
+      const dur = audio.duration || 0;
+      const currentProgressIdx = dur ? (audio.currentTime / dur) * bufferLength : 0;
 
       for (let i = 0; i < bufferLength; i++) {
         const v = dataArray[i] / 255;               // 0..1 — now independent of volume
